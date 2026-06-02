@@ -32,30 +32,8 @@ export default function ClientePanel({ cliente: clienteInicial, onLogout }) {
     animRef.current = requestAnimationFrame(tick)
   }
 
-  useEffect(() => {
-    cargarVisitasYPremio()
-    animarPuntos(cliente.puntos_actuales)
-
-    const canal = supabase
-      .channel('cliente-' + clienteInicial.id)
-      .on('postgres_changes', {
-        event: 'UPDATE',
-        schema: 'public',
-        table: 'cliente',
-        filter: 'id=eq.' + clienteInicial.id
-      }, payload => {
-        const nuevo = payload.new
-        setCliente(nuevo)
-        animarPuntos(nuevo.puntos_actuales)
-        cargarVisitasYPremio()
-        cargarHistorial()
-      })
-      .subscribe()
-
-    return () => { cancelAnimationFrame(animRef.current); supabase.removeChannel(canal) }
-  }, [])
-
-  async function cargarVisitasYPremio() {
+  async function cargarVisitasYPremio(ptsActuales) {
+    const pts = ptsActuales ?? clienteInicial.puntos_actuales
     const { data: txs } = await supabase
       .from('transaccion')
       .select('producto_id, producto:producto_id(categoria)')
@@ -67,10 +45,10 @@ export default function ClientePanel({ cliente: clienteInicial, onLogout }) {
       .from('premio')
       .select('*')
       .eq('activo', true)
-      .gt('costo_puntos', clienteInicial.puntos_actuales)
+      .gt('costo_puntos', pts)
       .order('costo_puntos')
       .limit(1)
-    if (prem && prem.length > 0) setProximoPremio(prem[0])
+    setProximoPremio(prem && prem.length > 0 ? prem[0] : null)
   }
 
   async function cargarPremios() {
@@ -97,9 +75,32 @@ export default function ClientePanel({ cliente: clienteInicial, onLogout }) {
     if (data) {
       setCliente(data)
       animarPuntos(data.puntos_actuales)
-      cargarVisitasYPremio()
+      cargarVisitasYPremio(data.puntos_actuales)
     }
   }
+
+  useEffect(() => {
+    cargarVisitasYPremio()
+    animarPuntos(clienteInicial.puntos_actuales)
+
+    const canal = supabase
+      .channel('cliente-' + clienteInicial.id)
+      .on('postgres_changes', {
+        event: 'UPDATE',
+        schema: 'public',
+        table: 'cliente',
+        filter: 'id=eq.' + clienteInicial.id
+      }, payload => {
+        const nuevo = payload.new
+        setCliente(nuevo)
+        animarPuntos(nuevo.puntos_actuales)
+        cargarVisitasYPremio(nuevo.puntos_actuales)
+        cargarHistorial()
+      })
+      .subscribe()
+
+    return () => { cancelAnimationFrame(animRef.current); supabase.removeChannel(canal) }
+  }, [])
 
   async function canjearPremio(premio) {
     setMensaje('')
