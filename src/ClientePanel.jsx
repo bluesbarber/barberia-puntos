@@ -115,7 +115,7 @@ export default function ClientePanel({ cliente: clienteInicial, onLogout }) {
 
   function formatFecha(iso) {
     const d = new Date(iso)
-    return d.toLocaleDateString('es-AR', { day: '2-digit', month: '2-digit', year: '2-digit' })
+    return d.toLocaleDateString('es-AR', { day: '2-digit', month: '2-digit', year: '2-digit' }) + ' ' + d.toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' })
   }
 
   const ptaFaltan = proximoPremio ? proximoPremio.costo_puntos - cliente.puntos_actuales : null
@@ -243,7 +243,7 @@ export default function ClientePanel({ cliente: clienteInicial, onLogout }) {
                   <div key={t.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '14px 0', borderBottom: i < historial.length - 1 ? '1px solid #2a2a2a' : 'none' }}>
                     <div>
                       <div style={{ fontSize: 14, color: theme.blanco, fontWeight: 600 }}>{t.producto?.nombre || 'Servicio'}</div>
-                      <div style={{ fontSize: 12, color: theme.grisMedio, marginTop: 2 }}>{formatFecha(t.fecha)}</div>
+                      <div style={{ fontSize: 12, color: theme.grisMedio, marginTop: 2 }}>{formatFecha(t.fecha)} · {new Date(t.fecha).toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' })}</div>
                     </div>
                     <span style={{ fontSize: 15, fontWeight: 700, color: theme.dorado }}>+{t.puntos_ganados} pts</span>
                   </div>

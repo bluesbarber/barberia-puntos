@@ -136,9 +136,9 @@ export default function BarberoPanel({ barbero, onLogout }) {
     return d.toLocaleDateString('es-AR', { day: '2-digit', month: '2-digit', year: '2-digit' })
   }
 
-  function formatHora(iso) {
+  function formatFechaHora(iso) {
     const d = new Date(iso)
-    return d.toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' })
+    return d.toLocaleDateString('es-AR', { day: '2-digit', month: '2-digit', year: '2-digit' }) + ' ' + d.toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' })
   }
 
   const btnTab = (tab, label) => (
@@ -157,11 +157,12 @@ export default function BarberoPanel({ barbero, onLogout }) {
     <div style={{ display: 'flex', justifyContent: 'space-around', borderTop: '1px solid ' + theme.dorado, background: '#111', padding: '10px 0', position: 'sticky', bottom: 0 }}>
       {[
         { id: 'panel', icono: '✂', label: 'Panel' },
+        { id: 'hoy', icono: '♙', label: 'Hoy' },
         { id: 'nuevo', icono: '♟', label: 'Nuevo cliente' },
       ].map(item => (
         <button
           key={item.id}
-          onClick={() => { setPantalla(item.id); setMensaje('') }}
+          onClick={() => { setPantalla(item.id); setMensaje(''); if (item.id === 'hoy') cargarHistorialHoy() }}
           style={{
             background: 'none', border: 'none', cursor: 'pointer', display: 'flex',
             flexDirection: 'column', alignItems: 'center', gap: 3,
@@ -288,7 +289,6 @@ export default function BarberoPanel({ barbero, onLogout }) {
                   {btnTab('compras', 'Sumar pts')}
                   {btnTab('canjes', 'Canjear')}
                   {btnTab('ajuste', 'Ajuste')}
-                  {btnTab('hoy', 'Hoy')}
                 </div>
 
                 {vista === 'compras' && (
@@ -330,27 +330,29 @@ export default function BarberoPanel({ barbero, onLogout }) {
                   </div>
                 )}
 
-                {vista === 'hoy' && (
-                  <div>
-                    {cargandoHoy ? (
-                      <div style={{ textAlign: 'center', color: theme.grisMedio, padding: 30 }}>Cargando...</div>
-                    ) : historialHoy.length === 0 ? (
-                      <div style={{ textAlign: 'center', color: theme.grisMedio, padding: 30, fontSize: 13 }}>No hay transacciones registradas hoy</div>
-                    ) : (
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                        {historialHoy.map(t => (
-                          <div key={t.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px 16px', borderRadius: 10, border: '1px solid #2a2a2a', background: '#1a1a1a' }}>
-                            <div>
-                              <div style={{ fontSize: 14, fontWeight: 600, color: theme.blanco }}>{t.cliente?.nombre}</div>
-                              <div style={{ fontSize: 12, color: theme.grisMedio, marginTop: 2 }}>{t.producto?.nombre} · {formatHora(t.fecha)}</div>
-                            </div>
-                            <span style={{ fontWeight: 700, color: theme.dorado, fontSize: 15 }}>+{t.puntos_ganados} pts</span>
-                          </div>
-                        ))}
-                      </div>
-                    )}
+              </div>
+            )}
+          </div>
+        )}
+
+        {pantalla === 'hoy' && (
+          <div>
+            <div style={{ fontSize: 11, color: theme.dorado, letterSpacing: 3, marginBottom: 16 }}>TRANSACCIONES DE HOY</div>
+            {cargandoHoy ? (
+              <div style={{ textAlign: 'center', color: theme.grisMedio, padding: 40 }}>Cargando...</div>
+            ) : historialHoy.length === 0 ? (
+              <div style={{ textAlign: 'center', color: theme.grisMedio, padding: 40, fontSize: 13 }}>No hay transacciones registradas hoy</div>
+            ) : (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                {historialHoy.map(t => (
+                  <div key={t.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px 16px', borderRadius: 10, border: '1px solid #2a2a2a', background: '#1a1a1a' }}>
+                    <div>
+                      <div style={{ fontSize: 14, fontWeight: 600, color: theme.blanco }}>{t.cliente?.nombre}</div>
+                      <div style={{ fontSize: 12, color: theme.grisMedio, marginTop: 2 }}>{t.producto?.nombre} · {formatFechaHora(t.fecha)}</div>
+                    </div>
+                    <span style={{ fontWeight: 700, color: theme.dorado, fontSize: 15 }}>+{t.puntos_ganados} pts</span>
                   </div>
-                )}
+                ))}
               </div>
             )}
           </div>
