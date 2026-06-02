@@ -23,7 +23,7 @@ export default function BarberoPanel({ barbero, onLogout }) {
     async function cargarDatos() {
       const { data: prods } = await supabase.from('producto').select('*').eq('activo', true).order('puntos_otorga', { ascending: false })
       const { data: prem } = await supabase.from('premio').select('*').eq('activo', true)
-      const { data: clientes } = await supabase.from('cliente').select('*').order('nombre')
+      const { data: clientes } = await supabase.from('cliente').select('*').order('id')
       setProductos(prods || [])
       setPremios(prem || [])
       setTodosLosClientes(clientes || [])
@@ -95,7 +95,7 @@ export default function BarberoPanel({ barbero, onLogout }) {
     await supabase.from('transaccion').delete().eq('cliente_id', id)
     await supabase.from('cliente').delete().eq('id', id)
     setCliente(null)
-    const { data: clientes } = await supabase.from('cliente').select('*').order('nombre')
+    const { data: clientes } = await supabase.from('cliente').select('*').order('id')
     setTodosLosClientes(clientes || [])
     setClientesFiltrados(clientes || [])
     setMensaje('Cuenta eliminada')
@@ -185,7 +185,10 @@ export default function BarberoPanel({ barbero, onLogout }) {
                 >Por teléfono</button>
               </div>
               <div style={{ maxHeight: 220, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 6 }}>
-                {clientesFiltrados.filter(c => c.rol === 'cliente').map(c => (
+                {(() => {
+                  const soloClientes = todosLosClientes.filter(c => c.rol === 'cliente')
+                  const posicion = Object.fromEntries(soloClientes.map((c, i) => [c.id, i + 1]))
+                  return clientesFiltrados.filter(c => c.rol === 'cliente').map(c => (
                   <div
                     key={c.id}
                     style={{ display: 'flex', alignItems: 'center', borderRadius: 10, border: '1px solid #2a2a2a', background: cliente && cliente.id === c.id ? '#2a2000' : '#1a1a1a', overflow: 'hidden' }}
@@ -195,7 +198,7 @@ export default function BarberoPanel({ barbero, onLogout }) {
                       style={{ flex: 1, display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 14px', background: 'none', border: 'none', cursor: 'pointer', color: theme.blanco, fontSize: 14 }}
                     >
                       <span style={{ fontWeight: 600 }}>{c.nombre}</span>
-                      <span style={{ color: theme.grisMedio, fontSize: 13 }}>#{c.id} · {c.telefono}</span>
+                      <span style={{ color: theme.grisMedio, fontSize: 13 }}>#{posicion[c.id]} · {c.telefono}</span>
                     </button>
                     <button
                       onClick={() => eliminarCliente(c.id)}
@@ -203,6 +206,7 @@ export default function BarberoPanel({ barbero, onLogout }) {
                     >✕</button>
                   </div>
                 ))}
+                })()}
                 {clientesFiltrados.filter(c => c.rol === 'cliente').length === 0 && (
                   <div style={{ textAlign: 'center', color: theme.grisMedio, padding: 16, fontSize: 13 }}>No se encontraron clientes</div>
                 )}
