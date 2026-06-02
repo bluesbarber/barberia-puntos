@@ -326,14 +326,6 @@ function NuevoClienteForm({ onVolver }) {
         </div>
       </div>
 
-      <div style={{ fontSize: 11, color: theme.dorado, letterSpacing: 3, marginBottom: 12 }}>O REGISTRAR MANUALMENTE</div>
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-        <input style={estilos.input} placeholder="Nombre completo" value={nombre} onChange={e => setNombre(e.target.value)} />
-        <input style={estilos.input} placeholder="Teléfono" value={telefono} onChange={e => setTelefono(e.target.value)} />
-        <input style={estilos.input} placeholder="Email (opcional)" value={email} onChange={e => setEmail(e.target.value)} />
-        {mensaje && <p style={{ color: exito ? theme.exito : theme.error, fontSize: 13, margin: 0 }}>{mensaje}</p>}
-        <button style={estilos.botonDorado} onClick={registrar}>Registrar cliente</button>
-      </div>
     </div>
   )
 }
