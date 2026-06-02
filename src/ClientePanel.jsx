@@ -60,13 +60,15 @@ export default function ClientePanel({ cliente: clienteInicial, onLogout }) {
 
   async function cargarHistorial() {
     setCargandoHistorial(true)
-    const { data } = await supabase
-      .from('transaccion')
-      .select('id, puntos_ganados, fecha, producto:producto_id(nombre)')
-      .eq('cliente_id', clienteInicial.id)
-      .order('fecha', { ascending: false })
-      .limit(50)
-    setHistorial(data || [])
+    const [{ data: txs }, { data: cnjs }] = await Promise.all([
+      supabase.from('transaccion').select('id, puntos_ganados, fecha, producto:producto_id(nombre)').eq('cliente_id', clienteInicial.id),
+      supabase.from('canje').select('id, puntos_usados, fecha, premio:premio_id(nombre)').eq('cliente_id', clienteInicial.id)
+    ])
+    const todos = [
+      ...(txs || []).map(t => ({ ...t, tipo: 'suma' })),
+      ...(cnjs || []).map(c => ({ ...c, tipo: 'canje' }))
+    ].sort((a, b) => new Date(b.fecha) - new Date(a.fecha))
+    setHistorial(todos)
     setCargandoHistorial(false)
   }
 
@@ -240,12 +242,16 @@ export default function ClientePanel({ cliente: clienteInicial, onLogout }) {
             ) : (
               <div style={{ ...estilos.tarjeta, padding: '4px 20px' }}>
                 {historial.map((t, i) => (
-                  <div key={t.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '14px 0', borderBottom: i < historial.length - 1 ? '1px solid #2a2a2a' : 'none' }}>
+                  <div key={t.tipo + t.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '14px 0', borderBottom: i < historial.length - 1 ? '1px solid #2a2a2a' : 'none' }}>
                     <div>
-                      <div style={{ fontSize: 14, color: theme.blanco, fontWeight: 600 }}>{t.producto?.nombre || 'Servicio'}</div>
+                      <div style={{ fontSize: 14, color: theme.blanco, fontWeight: 600 }}>
+                        {t.tipo === 'canje' ? '♛ ' + (t.premio?.nombre || 'Premio') : t.producto?.nombre || 'Servicio'}
+                      </div>
                       <div style={{ fontSize: 12, color: theme.grisMedio, marginTop: 2 }}>{formatFecha(t.fecha)}</div>
                     </div>
-                    <span style={{ fontSize: 15, fontWeight: 700, color: theme.dorado }}>+{t.puntos_ganados} pts</span>
+                    <span style={{ fontSize: 15, fontWeight: 700, color: t.tipo === 'canje' ? theme.error : theme.dorado }}>
+                      {t.tipo === 'canje' ? '-' + t.puntos_usados : '+' + t.puntos_ganados} pts
+                    </span>
                   </div>
                 ))}
               </div>

@@ -104,12 +104,15 @@ export default function BarberoPanel({ barbero, onLogout }) {
     setCargandoHoy(true)
     const hoy = new Date()
     hoy.setHours(0, 0, 0, 0)
-    const { data } = await supabase
-      .from('transaccion')
-      .select('id, puntos_ganados, fecha, cliente:cliente_id(nombre), producto:producto_id(nombre)')
-      .gte('fecha', hoy.toISOString())
-      .order('fecha', { ascending: false })
-    setHistorialHoy(data || [])
+    const [{ data: txs }, { data: cnjs }] = await Promise.all([
+      supabase.from('transaccion').select('id, puntos_ganados, fecha, cliente:cliente_id(nombre), producto:producto_id(nombre)').gte('fecha', hoy.toISOString()),
+      supabase.from('canje').select('id, puntos_usados, fecha, cliente:cliente_id(nombre), premio:premio_id(nombre)').gte('fecha', hoy.toISOString())
+    ])
+    const todos = [
+      ...(txs || []).map(t => ({ ...t, tipo: 'suma' })),
+      ...(cnjs || []).map(c => ({ ...c, tipo: 'canje' }))
+    ].sort((a, b) => new Date(b.fecha) - new Date(a.fecha))
+    setHistorialHoy(todos)
     setCargandoHoy(false)
   }
 
@@ -345,12 +348,16 @@ export default function BarberoPanel({ barbero, onLogout }) {
             ) : (
               <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                 {historialHoy.map(t => (
-                  <div key={t.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px 16px', borderRadius: 10, border: '1px solid #2a2a2a', background: '#1a1a1a' }}>
+                  <div key={t.tipo + t.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px 16px', borderRadius: 10, border: '1px solid #2a2a2a', background: '#1a1a1a' }}>
                     <div>
                       <div style={{ fontSize: 14, fontWeight: 600, color: theme.blanco }}>{t.cliente?.nombre}</div>
-                      <div style={{ fontSize: 12, color: theme.grisMedio, marginTop: 2 }}>{t.producto?.nombre} · {formatFechaHora(t.fecha)}</div>
+                      <div style={{ fontSize: 12, color: theme.grisMedio, marginTop: 2 }}>
+                        {t.tipo === 'canje' ? '♛ ' + (t.premio?.nombre || 'Premio') : t.producto?.nombre} · {formatFechaHora(t.fecha)}
+                      </div>
                     </div>
-                    <span style={{ fontWeight: 700, color: theme.dorado, fontSize: 15 }}>+{t.puntos_ganados} pts</span>
+                    <span style={{ fontWeight: 700, color: t.tipo === 'canje' ? theme.error : theme.dorado, fontSize: 15 }}>
+                      {t.tipo === 'canje' ? '-' + t.puntos_usados : '+' + t.puntos_ganados} pts
+                    </span>
                   </div>
                 ))}
               </div>
