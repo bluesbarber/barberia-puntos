@@ -17,11 +17,36 @@ export default function ClientePanel({ cliente: clienteInicial, onLogout }) {
   const [vista, setVista] = useState('inicio')
   const [mensaje, setMensaje] = useState('')
   const [puntosAnimados, setPuntosAnimados] = useState(0)
+  const [promptInstalacion, setPromptInstalacion] = useState(null)
   const animRef = useRef(null)
+
+  useEffect(() => {
+    const handler = e => { e.preventDefault(); setPromptInstalacion(e) }
+    window.addEventListener('beforeinstallprompt', handler)
+    return () => window.removeEventListener('beforeinstallprompt', handler)
+  }, [])
 
   useEffect(() => {
     cargarVisitasYPremio()
     animarPuntos(cliente.puntos_actuales)
+
+    const canal = supabase
+      .channel('cliente-' + clienteInicial.id)
+      .on('postgres_changes', {
+        event: 'UPDATE',
+        schema: 'public',
+        table: 'cliente',
+        filter: 'id=eq.' + clienteInicial.id
+      }, payload => {
+        const nuevo = payload.new
+        setCliente(nuevo)
+        animarPuntos(nuevo.puntos_actuales)
+        cargarVisitasYPremio()
+        if (historial.length > 0) cargarHistorial()
+      })
+      .subscribe()
+
+    return () => supabase.removeChannel(canal)
   }, [])
 
   function animarPuntos(total) {
@@ -307,6 +332,17 @@ export default function ClientePanel({ cliente: clienteInicial, onLogout }) {
               <div style={{ fontSize: 13, color: theme.grisMedio, marginBottom: 28, lineHeight: 1.7 }}>
                 Encontranos en Google Maps y dejá tu reseña para sumar 5 puntos. Mostrásela al barbero para que te los acredite.
               </div>
+              {promptInstalacion && (
+                <button
+                  onClick={() => { promptInstalacion.prompt(); setPromptInstalacion(null) }}
+                  style={{ display: 'block', width: '100%', textDecoration: 'none', textAlign: 'center', padding: '14px', borderRadius: 10, fontWeight: 700, fontSize: 15, background: 'linear-gradient(135deg, #1a1a1a, #2a2000)', color: theme.dorado, border: '1px solid ' + theme.dorado, cursor: 'pointer', marginBottom: 12 }}
+                >Instalar app en tu celular</button>
+              )}
+              {!promptInstalacion && (
+                <div style={{ background: '#1a1500', borderRadius: 10, padding: '12px 16px', marginBottom: 12, fontSize: 12, color: theme.grisMedio, lineHeight: 1.7, textAlign: 'left' }}>
+                  <span style={{ color: theme.dorado, fontWeight: 600 }}>Instalá la app:</span> en iPhone abrí Safari → tocá compartir → "Agregar a inicio". En Android aparece un aviso automático del navegador.
+                </div>
+              )}
               <a href={MAPS_URL} target="_blank" rel="noreferrer" style={{ display: 'block', textDecoration: 'none', textAlign: 'center', padding: '14px', borderRadius: 10, fontWeight: 700, fontSize: 15, background: theme.dorado, color: theme.negro, marginBottom: 12 }}>Ver en Google Maps</a>
               <a href={WHATSAPP_URL} target="_blank" rel="noreferrer" style={{ display: 'block', textDecoration: 'none', textAlign: 'center', padding: '14px', borderRadius: 10, fontWeight: 700, fontSize: 15, background: '#25D366', color: '#fff', marginBottom: 12 }}>WhatsApp</a>
               <a href={INSTAGRAM_URL} target="_blank" rel="noreferrer" style={{ display: 'block', textDecoration: 'none', textAlign: 'center', padding: '14px', borderRadius: 10, fontWeight: 700, fontSize: 15, background: 'linear-gradient(45deg, #833ab4, #fd1d1d, #fcb045)', color: '#fff' }}>Instagram</a>
