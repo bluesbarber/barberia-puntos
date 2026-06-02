@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { QRCodeSVG } from 'qrcode.react'
 import { supabase } from './supabase'
 import { estilos, theme } from './theme'
+import { getRango, calcularPuntos } from './rangos'
 
 const SITIO_URL = 'https://bluesbarber.vercel.app'
 const MESES_VENCIMIENTO = 6
@@ -22,6 +23,7 @@ export default function BarberoPanel({ barbero, onLogout }) {
   const [confirmando, setConfirmando] = useState(null)
   const [historialHoy, setHistorialHoy] = useState([])
   const [cargandoHoy, setCargandoHoy] = useState(false)
+  const [cortesCliente, setCortesCliente] = useState(0)
 
   useEffect(() => {
     async function cargarDatos() {
@@ -47,16 +49,18 @@ export default function BarberoPanel({ barbero, onLogout }) {
   }
 
   async function registrarCompra(producto) {
+    const ptsFinales = calcularPuntos(producto.puntos_otorga, cortesCliente)
     const { error } = await supabase.from('transaccion').insert({
       cliente_id: cliente.id,
       producto_id: producto.id,
-      puntos_ganados: producto.puntos_otorga
+      puntos_ganados: ptsFinales
     })
     setConfirmando(null)
     if (error) { setMensaje('Error al registrar'); return }
-    setMensaje('+' + producto.puntos_otorga + ' pts por ' + producto.nombre)
+    setMensaje('+' + ptsFinales + ' pts por ' + producto.nombre)
     const { data } = await supabase.from('cliente').select('*').eq('id', cliente.id).single()
     setCliente(data)
+    if (producto.categoria === 'corte') setCortesCliente(n => n + 1)
   }
 
   async function canjearPremio(premio) {
@@ -188,9 +192,18 @@ export default function BarberoPanel({ barbero, onLogout }) {
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.85)', zIndex: 100, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24 }}>
           <div style={{ background: '#1a1a1a', border: '1px solid ' + theme.dorado, borderRadius: 16, padding: '28px 24px', maxWidth: 340, width: '100%', textAlign: 'center' }}>
             <div style={{ fontSize: 13, color: theme.grisMedio, marginBottom: 8 }}>Confirmá la operación</div>
-            <div style={{ fontSize: 18, fontWeight: 700, color: theme.blanco, marginBottom: 6 }}>{cliente?.nombre}</div>
+            <div style={{ fontSize: 18, fontWeight: 700, color: theme.blanco, marginBottom: 4 }}>{cliente?.nombre}</div>
+            <div style={{ fontSize: 12, color: theme.dorado, marginBottom: 6 }}>{getRango(cortesCliente).icono} {getRango(cortesCliente).nombre}</div>
             <div style={{ fontSize: 15, color: theme.grisMedio, marginBottom: 4 }}>{confirmando.nombre}</div>
-            <div style={{ fontSize: 28, fontWeight: 700, color: theme.dorado, marginBottom: 24 }}>+{confirmando.puntos_otorga} pts</div>
+            {getRango(cortesCliente).bonus > 0 ? (
+              <div style={{ marginBottom: 20 }}>
+                <div style={{ fontSize: 13, color: theme.grisMedio, textDecoration: 'line-through' }}>{confirmando.puntos_otorga} pts base</div>
+                <div style={{ fontSize: 28, fontWeight: 700, color: theme.dorado }}>+{calcularPuntos(confirmando.puntos_otorga, cortesCliente)} pts</div>
+                <div style={{ fontSize: 12, color: theme.doradoClaro }}>+{getRango(cortesCliente).bonus * 100}% por rango {getRango(cortesCliente).nombre}</div>
+              </div>
+            ) : (
+              <div style={{ fontSize: 28, fontWeight: 700, color: theme.dorado, marginBottom: 20 }}>+{confirmando.puntos_otorga} pts</div>
+            )}
             <div style={{ display: 'flex', gap: 12 }}>
               <button onClick={() => setConfirmando(null)} style={{ ...estilos.botonOscuro, flex: 1 }}>Cancelar</button>
               <button onClick={() => registrarCompra(confirmando)} style={{ ...estilos.botonDorado, flex: 1 }}>Confirmar</button>
@@ -255,7 +268,11 @@ export default function BarberoPanel({ barbero, onLogout }) {
                       style={{ display: 'flex', alignItems: 'center', borderRadius: 10, border: '1px solid #2a2a2a', background: cliente && cliente.id === c.id ? '#2a2000' : '#1a1a1a', overflow: 'hidden' }}
                     >
                       <button
-                        onClick={() => { setCliente(c); setTelefono(''); setMensaje('') }}
+                        onClick={async () => {
+                        setCliente(c); setTelefono(''); setMensaje('')
+                        const { data: txs } = await supabase.from('transaccion').select('producto_id, producto:producto_id(categoria)').eq('cliente_id', c.id)
+                        setCortesCliente((txs || []).filter(t => t.producto?.categoria === 'corte').length)
+                      }}
                         style={{ flex: 1, display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 14px', background: 'none', border: 'none', cursor: 'pointer', color: theme.blanco, fontSize: 14 }}
                       >
                         <span style={{ fontWeight: 600 }}>{c.nombre}</span>
@@ -283,7 +300,12 @@ export default function BarberoPanel({ barbero, onLogout }) {
             {cliente && (
               <div>
                 <div style={{ ...estilos.tarjeta, background: 'linear-gradient(160deg, #1a1a1a, #2a2000)', marginBottom: 16 }}>
-                  <div style={{ fontSize: 18, fontWeight: 700 }}>{cliente.nombre}</div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <div style={{ fontSize: 18, fontWeight: 700 }}>{cliente.nombre}</div>
+                    <div style={{ fontSize: 13, background: '#2a2000', border: '1px solid ' + theme.doradoOscuro, borderRadius: 20, padding: '2px 12px', color: theme.dorado, fontWeight: 700 }}>
+                      {getRango(cortesCliente).icono} {getRango(cortesCliente).nombre}
+                    </div>
+                  </div>
                   <div style={{ fontSize: 13, color: theme.grisMedio }}>{cliente.telefono}</div>
                   <div style={{ fontSize: 40, fontWeight: 700, color: theme.dorado, marginTop: 8 }}>{cliente.puntos_actuales} <span style={{ fontSize: 16 }}>pts</span></div>
                 </div>

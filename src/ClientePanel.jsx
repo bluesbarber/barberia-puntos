@@ -1,6 +1,7 @@
 import { useEffect, useState, useRef } from 'react'
 import { supabase } from './supabase'
 import { estilos, theme } from './theme'
+import { getRango, RANGOS } from './rangos'
 
 const MAPS_URL = 'https://www.google.com/maps/place/Barberia+Peluqueria/@-34.5668916,-58.4575156,19z/data=!4m6!3m5!1s0x95bcb5d12c283da7:0xa6d591f23e1b33d0!8m2!3d-34.5663271!4d-58.4569298!16s%2Fg%2F11wg9hbs7q'
 const WHATSAPP_URL = 'https://wa.me/541130896068'
@@ -156,6 +157,9 @@ export default function ClientePanel({ cliente: clienteInicial, onLogout }) {
   }
 
   const ptaFaltan = proximoPremio ? proximoPremio.costo_puntos - cliente.puntos_actuales : null
+  const rango = getRango(visitas)
+  const rangoSiguiente = RANGOS.find(r => r.minCortes > visitas)
+  const cortesParaSiguiente = rangoSiguiente ? rangoSiguiente.minCortes - visitas : null
 
   const barraNav = (
     <div style={{ display: 'flex', justifyContent: 'space-around', borderTop: '1px solid ' + theme.dorado, background: '#111', padding: '12px 0', position: 'sticky', bottom: 0 }}>
@@ -210,9 +214,13 @@ export default function ClientePanel({ cliente: clienteInicial, onLogout }) {
               <div style={{ fontSize: 13, color: theme.dorado, letterSpacing: 4, marginBottom: 12 }}>TUS PUNTOS</div>
               <div style={{ fontSize: 72, fontWeight: 700, color: theme.dorado, lineHeight: 1 }}>{puntosAnimados}</div>
               <div style={{ fontSize: 14, color: theme.grisMedio, marginTop: 10 }}>puntos acumulados</div>
+              <div style={{ marginTop: 14, display: 'inline-block', background: '#2a2000', border: '1px solid ' + theme.doradoOscuro, borderRadius: 20, padding: '4px 16px', fontSize: 13, fontWeight: 700, color: theme.dorado }}>
+                {rango.icono} {rango.nombre} {rango.bonus > 0 && <span style={{ color: theme.doradoClaro }}>· +{rango.bonus * 100}% pts</span>}
+              </div>
               {visitas > 0 && (
-                <div style={{ marginTop: 14, fontSize: 13, color: theme.grisMedio }}>
-                  ✂ <span style={{ color: theme.doradoClaro, fontWeight: 600 }}>{visitas}</span> {visitas === 1 ? 'visita' : 'visitas'} a la barbería
+                <div style={{ marginTop: 8, fontSize: 12, color: theme.grisMedio }}>
+                  ✂ <span style={{ color: theme.doradoClaro, fontWeight: 600 }}>{visitas}</span> {visitas === 1 ? 'visita' : 'visitas'}
+                  {cortesParaSiguiente && <span> · faltan <span style={{ color: theme.doradoClaro, fontWeight: 600 }}>{cortesParaSiguiente}</span> para {rangoSiguiente.icono} {rangoSiguiente.nombre}</span>}
                 </div>
               )}
             </div>
