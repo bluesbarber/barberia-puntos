@@ -233,9 +233,6 @@ export default function BarberoPanel({ barbero, onLogout }) {
                         style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px 16px', borderRadius: 10, border: '1px solid #2a2a2a', background: '#1a1a1a', cursor: 'pointer', color: theme.blanco, fontSize: 15 }}>
                         <div style={{ textAlign: 'left' }}>
                           <div>{p.nombre}</div>
-                          {p.nombre === 'Traés un amigo' && (
-                            <div style={{ fontSize: 11, color: theme.grisMedio, marginTop: 2 }}>Al que invita: +40 pts · Al invitado: lo del corte</div>
-                          )}
                         </div>
                         <span style={{ fontWeight: 700, color: theme.dorado }}>+{p.puntos_otorga} pts</span>
                       </button>

@@ -3,6 +3,8 @@ import { supabase } from './supabase'
 import { estilos, theme } from './theme'
 
 const MAPS_URL = 'https://www.google.com/maps/place/Barberia+Peluqueria/@-34.5668916,-58.4575156,19z/data=!4m6!3m5!1s0x95bcb5d12c283da7:0xa6d591f23e1b33d0!8m2!3d-34.5663271!4d-58.4569298!16s%2Fg%2F11wg9hbs7q'
+const WHATSAPP_URL = 'https://wa.me/541130896068'
+const INSTAGRAM_URL = 'https://instagram.com/blues.barber_'
 
 export default function ClientePanel({ cliente: clienteInicial, onLogout }) {
   const [cliente, setCliente] = useState(clienteInicial)
@@ -44,7 +46,7 @@ export default function ClientePanel({ cliente: clienteInicial, onLogout }) {
       {[
         { id: 'inicio', icono: '★', label: 'Inicio' },
         { id: 'premios', icono: '♛', label: 'Premios' },
-        { id: 'ubicacion', icono: '♪', label: 'Ubicación' },
+        { id: 'ubicacion', icono: '♪', label: 'Contacto' },
       ].map(item => (
         <button
           key={item.id}
@@ -95,7 +97,7 @@ export default function ClientePanel({ cliente: clienteInicial, onLogout }) {
                 { label: 'Corte + barba', pts: '+30 pts' },
                 { label: 'Comprar Monster', pts: '+10 pts' },
                 { label: 'Insumos', pts: '+10 pts' },
-                { label: 'Traés un amigo', pts: '+40 pts' },
+                { label: 'PROMO 2 cortes x 30k', pts: '+40 pts' },
                 { label: 'Opinión en Google', pts: '+5 pts' },
               ].map((item, i, arr) => (
                 <div key={i} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '14px 0', borderBottom: i < arr.length - 1 ? '1px solid #2a2a2a' : 'none' }}>
@@ -106,13 +108,6 @@ export default function ClientePanel({ cliente: clienteInicial, onLogout }) {
             </div>
 
             <div style={{ fontSize: 11, color: theme.dorado, letterSpacing: 3, marginBottom: 14 }}>ACLARACIONES</div>
-
-            <div style={{ ...estilos.tarjeta, background: '#1a1500', borderColor: theme.doradoOscuro, padding: '18px 20px', marginBottom: 12 }}>
-              <div style={{ fontSize: 13, fontWeight: 600, color: theme.dorado, marginBottom: 8 }}>Traés un amigo</div>
-              <div style={{ fontSize: 13, color: theme.grisMedio, lineHeight: 1.7 }}>
-                Al que invita se le suman 40 pts. Al invitado se le suma lo que corresponda al servicio que tome.
-              </div>
-            </div>
 
             <div style={{ ...estilos.tarjeta, background: '#1a1500', borderColor: theme.doradoOscuro, padding: '18px 20px' }}>
               <div style={{ fontSize: 13, fontWeight: 600, color: theme.dorado, marginBottom: 8 }}>Opinión en Google</div>
@@ -170,7 +165,7 @@ export default function ClientePanel({ cliente: clienteInicial, onLogout }) {
 
         {vista === 'ubicacion' && (
           <div>
-            <div style={{ fontSize: 11, color: theme.dorado, letterSpacing: 3, marginBottom: 16 }}>ENCONTRANOS</div>
+            <div style={{ fontSize: 11, color: theme.dorado, letterSpacing: 3, marginBottom: 16 }}>CONTACTO</div>
 
             <div style={{ ...estilos.tarjeta, textAlign: 'center', padding: '36px 20px', marginBottom: 16 }}>
               <div style={{ fontSize: 48, marginBottom: 16 }}>♪</div>
@@ -178,14 +173,9 @@ export default function ClientePanel({ cliente: clienteInicial, onLogout }) {
               <div style={{ fontSize: 13, color: theme.grisMedio, marginBottom: 28, lineHeight: 1.7 }}>
                 Encontranos en Google Maps y dejá tu reseña para sumar 5 puntos. Mostrásela al barbero para que te los acredite.
               </div>
-              <a href={MAPS_URL} target="_blank" rel="noreferrer" style={{ ...estilos.botonDorado, display: 'block', textDecoration: 'none', textAlign: 'center', padding: '14px', borderRadius: 10, fontWeight: 700 }}>Ver en Google Maps</a>
-            </div>
-
-            <div style={{ ...estilos.tarjeta, background: '#1a1500', borderColor: theme.doradoOscuro, padding: '18px 20px' }}>
-              <div style={{ fontSize: 12, color: theme.dorado, marginBottom: 8, fontWeight: 600 }}>Traés un amigo</div>
-              <div style={{ fontSize: 13, color: theme.grisMedio, lineHeight: 1.7 }}>
-                Al que invita se le suman 40 pts. Al invitado se le suma lo que corresponda al servicio que tome.
-              </div>
+              <a href={MAPS_URL} target="_blank" rel="noreferrer" style={{ ...estilos.botonDorado, display: 'block', textDecoration: 'none', textAlign: 'center', padding: '14px', borderRadius: 10, fontWeight: 700, marginBottom: 12 }}>Ver en Google Maps</a>
+              <a href={WHATSAPP_URL} target="_blank" rel="noreferrer" style={{ display: 'block', textDecoration: 'none', textAlign: 'center', padding: '14px', borderRadius: 10, fontWeight: 700, fontSize: 15, background: '#25D366', color: '#fff', marginBottom: 12 }}>WhatsApp</a>
+              <a href={INSTAGRAM_URL} target="_blank" rel="noreferrer" style={{ display: 'block', textDecoration: 'none', textAlign: 'center', padding: '14px', borderRadius: 10, fontWeight: 700, fontSize: 15, background: 'linear-gradient(45deg, #833ab4, #fd1d1d, #fcb045)', color: '#fff' }}>Instagram</a>
             </div>
           </div>
         )}
