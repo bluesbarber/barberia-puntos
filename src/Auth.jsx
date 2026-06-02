@@ -54,6 +54,12 @@ export default function Auth({ onLogin }) {
     if (password !== passwordRepetido) {
       setMensaje('Las contraseñas no coinciden'); return
     }
+    if (/\d/.test(nombre)) {
+      setMensaje('El nombre no puede contener números'); return
+    }
+    if (telefono.replace(/\D/g, '').length < 8) {
+      setMensaje('El teléfono debe tener al menos 8 números'); return
+    }
     if (password.length < 6) {
       setMensaje('La contraseña debe tener al menos 6 caracteres'); return
     }
