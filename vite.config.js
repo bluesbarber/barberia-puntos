@@ -8,6 +8,17 @@ export default defineConfig({
     VitePWA({
       registerType: 'autoUpdate',
       includeAssets: ['logo.png'],
+      workbox: {
+        skipWaiting: true,
+        clientsClaim: true,
+        navigateFallback: 'index.html',
+        runtimeCaching: [
+          {
+            urlPattern: ({ url }) => url.hostname.includes('supabase.co'),
+            handler: 'NetworkOnly'
+          }
+        ]
+      },
       manifest: {
         name: 'Blues Barber',
         short_name: 'Blues Barber',
