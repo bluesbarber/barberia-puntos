@@ -17,6 +17,7 @@ export default function ClientePanel({ cliente: clienteInicial, onLogout }) {
   const [vista, setVista] = useState('inicio')
   const [mensaje, setMensaje] = useState('')
   const [puntosAnimados, setPuntosAnimados] = useState(0)
+  const [avisoVencimiento, setAvisoVencimiento] = useState(null)
   const animRef = useRef(null)
 
   function animarPuntos(total) {
@@ -30,6 +31,29 @@ export default function ClientePanel({ cliente: clienteInicial, onLogout }) {
       if (progreso < 1) animRef.current = requestAnimationFrame(tick)
     }
     animRef.current = requestAnimationFrame(tick)
+  }
+
+  async function chequearVencimiento() {
+    if (clienteInicial.puntos_actuales === 0) return
+    const { data } = await supabase
+      .from('transaccion')
+      .select('fecha')
+      .eq('cliente_id', clienteInicial.id)
+      .order('fecha', { ascending: false })
+      .limit(1)
+    const ultima = data && data.length > 0 ? new Date(data[0].fecha) : null
+    if (!ultima) return
+    const hoy = new Date()
+    const mesesSinVenir = (hoy - ultima) / (1000 * 60 * 60 * 24 * 30)
+    if (mesesSinVenir >= 6) {
+      await supabase.from('cliente').update({ puntos_actuales: 0 }).eq('id', clienteInicial.id)
+      setCliente(c => ({ ...c, puntos_actuales: 0 }))
+      setPuntosAnimados(0)
+      setAvisoVencimiento('vencido')
+    } else if (mesesSinVenir >= 5) {
+      const diasRestantes = Math.ceil((ultima.setMonth(ultima.getMonth() + 6) - hoy) / (1000 * 60 * 60 * 24))
+      setAvisoVencimiento('proximo:' + diasRestantes)
+    }
   }
 
   async function cargarVisitasYPremio(ptsActuales) {
@@ -84,6 +108,7 @@ export default function ClientePanel({ cliente: clienteInicial, onLogout }) {
   useEffect(() => {
     cargarVisitasYPremio()
     animarPuntos(clienteInicial.puntos_actuales)
+    chequearVencimiento()
     return () => cancelAnimationFrame(animRef.current)
   }, [])
 
@@ -181,6 +206,28 @@ export default function ClientePanel({ cliente: clienteInicial, onLogout }) {
                 </div>
               )}
             </div>
+
+            {avisoVencimiento === 'vencido' && (
+              <div style={{ background: '#1a0000', border: '1px solid ' + theme.error, borderRadius: 12, padding: '14px 18px', marginBottom: 16, display: 'flex', alignItems: 'center', gap: 12 }}>
+                <span style={{ fontSize: 22 }}>⏳</span>
+                <div>
+                  <div style={{ fontSize: 13, fontWeight: 700, color: theme.error }}>Tus puntos vencieron</div>
+                  <div style={{ fontSize: 12, color: theme.grisMedio, marginTop: 2 }}>Pasaron 6 meses sin visitas. ¡Te esperamos para que empieces a acumular de nuevo!</div>
+                </div>
+              </div>
+            )}
+
+            {avisoVencimiento?.startsWith('proximo:') && (
+              <div style={{ background: '#1a1000', border: '1px solid #C97A2E', borderRadius: 12, padding: '14px 18px', marginBottom: 16, display: 'flex', alignItems: 'center', gap: 12 }}>
+                <span style={{ fontSize: 22 }}>⏳</span>
+                <div>
+                  <div style={{ fontSize: 13, fontWeight: 700, color: '#E8A84C' }}>Tus puntos están por vencer</div>
+                  <div style={{ fontSize: 12, color: theme.grisMedio, marginTop: 2 }}>
+                    Te quedan <span style={{ color: '#E8A84C', fontWeight: 700 }}>{avisoVencimiento.split(':')[1]} días</span> para usarlos antes de que se reseteen. ¡Pasate por la barbería!
+                  </div>
+                </div>
+              </div>
+            )}
 
             {proximoPremio && ptaFaltan <= 30 && (
               <div style={{ background: '#1a1500', border: '1px solid ' + theme.dorado, borderRadius: 12, padding: '14px 18px', marginBottom: 20, display: 'flex', alignItems: 'center', gap: 12 }}>
