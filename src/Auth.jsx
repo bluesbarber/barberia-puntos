@@ -95,23 +95,23 @@ export default function Auth({ onLogin }) {
   }
 
   return (
-    <div style={{ ...estilos.pantalla, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100vh', overflow: 'hidden', position: 'fixed', inset: 0 }}>
+    <div style={{ ...estilos.pantalla, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '100vh' }}>
       <div style={{ width: '100%', maxWidth: 400, padding: '0 16px' }}>
 
-        <div style={{ textAlign: 'center', fontSize: 22, color: theme.dorado, letterSpacing: 8, marginBottom: 4 }}>
+        <div style={{ textAlign: 'center', fontSize: 28, color: theme.dorado, letterSpacing: 8, marginBottom: 8 }}>
           ♪ ♩ ♫
         </div>
 
-        <div style={{ textAlign: 'center', marginBottom: 16 }}>
-          <img src="/logo.png" alt="Blues Barber" style={{ width: 90, height: 90, objectFit: 'contain', marginBottom: 4 }} />
-          <div style={{ fontSize: 12, color: theme.dorado, letterSpacing: 4 }}>SISTEMA DE PUNTOS</div>
+        <div style={{ textAlign: 'center', marginBottom: 32 }}>
+          <img src="/logo.png" alt="Blues Barber" style={{ width: 140, height: 140, objectFit: 'contain', marginBottom: 8 }} />
+          <div style={{ fontSize: 13, color: theme.dorado, letterSpacing: 4 }}>SISTEMA DE PUNTOS</div>
         </div>
 
-        <div style={{ ...estilos.tarjeta, padding: '18px 20px' }}>
+        <div style={estilos.tarjeta}>
           {pantalla === 'login' ? (
             <div>
-              <h2 style={{ color: theme.dorado, fontSize: 18, marginBottom: 14, textAlign: 'center' }}>Iniciar sesión</h2>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+              <h2 style={{ color: theme.dorado, fontSize: 20, marginBottom: 20, textAlign: 'center' }}>Iniciar sesión</h2>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
                 <input style={estilos.input} placeholder="Email" value={email} onChange={e => setEmail(e.target.value)} />
                 <div style={{ position: 'relative' }}>
                   <input style={{ ...estilos.input, paddingRight: 44 }} placeholder="Contraseña" type={verPassword ? 'text' : 'password'} value={password} onChange={e => setPassword(e.target.value)} onKeyDown={e => e.key === 'Enter' && login()} />
@@ -173,6 +173,9 @@ export default function Auth({ onLogin }) {
           )}
         </div>
 
+        <div style={{ textAlign: 'center', color: theme.doradoOscuro, fontSize: 20, letterSpacing: 12, marginTop: 8 }}>
+          ♬ ♪ ♩
+        </div>
       </div>
     </div>
   )
