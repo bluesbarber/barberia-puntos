@@ -20,6 +20,7 @@ export default function ClientePanel({ cliente: clienteInicial, onLogout }) {
   const [puntosAnimados, setPuntosAnimados] = useState(0)
   const [avisoVencimiento, setAvisoVencimiento] = useState(null)
   const [promptInstalacion, setPromptInstalacion] = useState(null)
+  const [verRangos, setVerRangos] = useState(false)
   const animRef = useRef(null)
 
   useEffect(() => {
@@ -193,6 +194,31 @@ export default function ClientePanel({ cliente: clienteInicial, onLogout }) {
 
   return (
     <div style={{ ...estilos.pantalla, display: 'flex', flexDirection: 'column', maxWidth: 480, margin: '0 auto', padding: 0, minHeight: '100vh' }}>
+
+      {verRangos && (
+        <div onClick={() => setVerRangos(false)} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.85)', zIndex: 100, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24 }}>
+          <div onClick={e => e.stopPropagation()} style={{ background: '#1a1a1a', border: '1px solid ' + theme.dorado, borderRadius: 16, padding: '28px 24px', maxWidth: 340, width: '100%' }}>
+            <div style={{ fontSize: 13, color: theme.dorado, letterSpacing: 3, marginBottom: 20, textAlign: 'center' }}>SISTEMA DE RANGOS</div>
+            {RANGOS.map((r, i) => (
+              <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 14, padding: '14px 0', borderBottom: i < RANGOS.length - 1 ? '1px solid #2a2a2a' : 'none', background: r.nombre === rango.nombre ? '#2a2000' : 'transparent', borderRadius: 8, paddingLeft: r.nombre === rango.nombre ? 10 : 0 }}>
+                <span style={{ fontSize: 28 }}>{r.icono}</span>
+                <div style={{ flex: 1 }}>
+                  <div style={{ fontSize: 15, fontWeight: 700, color: r.nombre === rango.nombre ? theme.dorado : theme.blanco }}>
+                    {r.nombre} {r.nombre === rango.nombre && <span style={{ fontSize: 11, color: theme.doradoClaro }}>← tu rango</span>}
+                  </div>
+                  <div style={{ fontSize: 12, color: theme.grisMedio, marginTop: 2 }}>
+                    {r.minCortes === 0 ? 'Desde el primer corte' : 'Desde ' + r.minCortes + ' cortes'}
+                  </div>
+                </div>
+                <div style={{ fontSize: 14, fontWeight: 700, color: r.bonus > 0 ? theme.dorado : theme.grisMedio }}>
+                  {r.bonus > 0 ? '+' + (r.bonus * 100) + '% pts' : 'sin bonus'}
+                </div>
+              </div>
+            ))}
+            <button onClick={() => setVerRangos(false)} style={{ ...estilos.botonOscuro, marginTop: 20 }}>Cerrar</button>
+          </div>
+        </div>
+      )}
       <div style={{ flex: 1, padding: '28px 20px 20px', overflowY: 'auto' }}>
 
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 28 }}>
@@ -214,9 +240,9 @@ export default function ClientePanel({ cliente: clienteInicial, onLogout }) {
               <div style={{ fontSize: 13, color: theme.dorado, letterSpacing: 4, marginBottom: 12 }}>TUS PUNTOS</div>
               <div style={{ fontSize: 72, fontWeight: 700, color: theme.dorado, lineHeight: 1 }}>{puntosAnimados}</div>
               <div style={{ fontSize: 14, color: theme.grisMedio, marginTop: 10 }}>puntos acumulados</div>
-              <div style={{ marginTop: 14, display: 'inline-block', background: '#2a2000', border: '1px solid ' + theme.doradoOscuro, borderRadius: 20, padding: '4px 16px', fontSize: 13, fontWeight: 700, color: theme.dorado }}>
+              <button onClick={() => setVerRangos(true)} style={{ marginTop: 14, display: 'inline-block', background: '#2a2000', border: '1px solid ' + theme.doradoOscuro, borderRadius: 20, padding: '4px 16px', fontSize: 13, fontWeight: 700, color: theme.dorado, cursor: 'pointer' }}>
                 {rango.icono} {rango.nombre} {rango.bonus > 0 && <span style={{ color: theme.doradoClaro }}>· +{rango.bonus * 100}% pts</span>}
-              </div>
+              </button>
               {visitas > 0 && (
                 <div style={{ marginTop: 8, fontSize: 12, color: theme.grisMedio }}>
                   ✂ <span style={{ color: theme.doradoClaro, fontWeight: 600 }}>{visitas}</span> {visitas === 1 ? 'visita' : 'visitas'}
