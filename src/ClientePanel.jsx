@@ -89,7 +89,7 @@ export default function ClientePanel({ cliente: clienteInicial, onLogout }) {
 
   async function cargarPremios() {
     setCargandoPremios(true)
-    const { data } = await supabase.from('premio').select('*').eq('activo', true).order('costo_puntos')
+    const { data } = await supabase.from('premio').select('*').eq('activo', true).order('costo_puntos', { ascending: false })
     setPremios(data || [])
     setCargandoPremios(false)
   }

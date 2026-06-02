@@ -28,7 +28,7 @@ export default function BarberoPanel({ barbero, onLogout }) {
   useEffect(() => {
     async function cargarDatos() {
       const { data: prods } = await supabase.from('producto').select('*').eq('activo', true).order('puntos_otorga', { ascending: false })
-      const { data: prem } = await supabase.from('premio').select('*').eq('activo', true)
+      const { data: prem } = await supabase.from('premio').select('*').eq('activo', true).order('costo_puntos', { ascending: false })
       const { data: clientes } = await supabase.from('cliente').select('*').order('id')
       setProductos(prods || [])
       setPremios(prem || [])
