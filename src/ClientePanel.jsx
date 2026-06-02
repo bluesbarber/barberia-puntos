@@ -20,6 +20,19 @@ export default function ClientePanel({ cliente: clienteInicial, onLogout }) {
   const [promptInstalacion, setPromptInstalacion] = useState(null)
   const animRef = useRef(null)
 
+  function animarPuntos(total) {
+    cancelAnimationFrame(animRef.current)
+    const duracion = 1000
+    const inicio = Date.now()
+    const tick = () => {
+      const progreso = Math.min((Date.now() - inicio) / duracion, 1)
+      const eased = 1 - Math.pow(1 - progreso, 3)
+      setPuntosAnimados(Math.floor(eased * total))
+      if (progreso < 1) animRef.current = requestAnimationFrame(tick)
+    }
+    animRef.current = requestAnimationFrame(tick)
+  }
+
   useEffect(() => {
     const handler = e => { e.preventDefault(); setPromptInstalacion(e) }
     window.addEventListener('beforeinstallprompt', handler)
@@ -42,26 +55,12 @@ export default function ClientePanel({ cliente: clienteInicial, onLogout }) {
         setCliente(nuevo)
         animarPuntos(nuevo.puntos_actuales)
         cargarVisitasYPremio()
-        if (historial.length > 0) cargarHistorial()
+        cargarHistorial()
       })
       .subscribe()
 
-    return () => supabase.removeChannel(canal)
+    return () => { cancelAnimationFrame(animRef.current); supabase.removeChannel(canal) }
   }, [])
-
-  function animarPuntos(total) {
-    const duracion = 1000
-    const inicio = Date.now()
-    const tick = () => {
-      const progreso = Math.min((Date.now() - inicio) / duracion, 1)
-      const eased = 1 - Math.pow(1 - progreso, 3)
-      setPuntosAnimados(Math.floor(eased * total))
-      if (progreso < 1) animRef.current = requestAnimationFrame(tick)
-    }
-    animRef.current = requestAnimationFrame(tick)
-  }
-
-  useEffect(() => () => cancelAnimationFrame(animRef.current), [])
 
   async function cargarVisitasYPremio() {
     const { data: txs } = await supabase
