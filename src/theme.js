@@ -5,7 +5,7 @@ export const theme = {
   doradoOscuro: '#9A7A2E',
   blanco: '#FFFFFF',
   grisClaro: '#F5F5F0',
-  grisMedio: '#888888',
+  grisMedio: '#AAAAAA',
   error: '#E53935',
   exito: '#2E7D32',
 }

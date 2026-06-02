@@ -4,6 +4,7 @@ import { supabase } from './supabase'
 import { estilos, theme } from './theme'
 
 const SITIO_URL = 'https://bluesbarber.vercel.app'
+const MESES_VENCIMIENTO = 6
 
 export default function BarberoPanel({ barbero, onLogout }) {
   const [telefono, setTelefono] = useState('')
@@ -18,6 +19,9 @@ export default function BarberoPanel({ barbero, onLogout }) {
   const [todosLosClientes, setTodosLosClientes] = useState([])
   const [clientesFiltrados, setClientesFiltrados] = useState([])
   const [buscarPor, setBuscarPor] = useState('nombre')
+  const [confirmando, setConfirmando] = useState(null)
+  const [historialHoy, setHistorialHoy] = useState([])
+  const [cargandoHoy, setCargandoHoy] = useState(false)
 
   useEffect(() => {
     async function cargarDatos() {
@@ -42,18 +46,13 @@ export default function BarberoPanel({ barbero, onLogout }) {
     ))
   }
 
-  async function buscarCliente(tel, setFn) {
-    const { data } = await supabase.from('cliente').select('*').eq('telefono', tel.trim()).single()
-    if (!data) { setMensaje('Cliente no encontrado'); setFn(null) }
-    else { setFn(data); setMensaje('') }
-  }
-
   async function registrarCompra(producto) {
     const { error } = await supabase.from('transaccion').insert({
       cliente_id: cliente.id,
       producto_id: producto.id,
       puntos_ganados: producto.puntos_otorga
     })
+    setConfirmando(null)
     if (error) { setMensaje('Error al registrar'); return }
     setMensaje('+' + producto.puntos_otorga + ' pts por ' + producto.nombre)
     const { data } = await supabase.from('cliente').select('*').eq('id', cliente.id).single()
@@ -101,11 +100,52 @@ export default function BarberoPanel({ barbero, onLogout }) {
     setMensaje('Cuenta eliminada')
   }
 
+  async function cargarHistorialHoy() {
+    setCargandoHoy(true)
+    const hoy = new Date()
+    hoy.setHours(0, 0, 0, 0)
+    const { data } = await supabase
+      .from('transaccion')
+      .select('id, puntos_ganados, created_at, cliente:cliente_id(nombre), producto:producto_id(nombre)')
+      .gte('created_at', hoy.toISOString())
+      .order('created_at', { ascending: false })
+    setHistorialHoy(data || [])
+    setCargandoHoy(false)
+  }
+
+  function alertaVencimiento(c) {
+    if (!c) return null
+    const { data: txs } = { data: null }
+    return null
+  }
+
+  function vencimientoInfo(ultimaFecha) {
+    if (!ultimaFecha) return null
+    const ultima = new Date(ultimaFecha)
+    const vence = new Date(ultima)
+    vence.setMonth(vence.getMonth() + MESES_VENCIMIENTO)
+    const hoy = new Date()
+    const diasRestantes = Math.ceil((vence - hoy) / (1000 * 60 * 60 * 24))
+    if (diasRestantes > 30) return null
+    if (diasRestantes <= 0) return { vencido: true, dias: 0 }
+    return { vencido: false, dias: diasRestantes }
+  }
+
+  function formatFecha(iso) {
+    const d = new Date(iso)
+    return d.toLocaleDateString('es-AR', { day: '2-digit', month: '2-digit', year: '2-digit' })
+  }
+
+  function formatHora(iso) {
+    const d = new Date(iso)
+    return d.toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' })
+  }
+
   const btnTab = (tab, label) => (
     <button
-      onClick={() => { setVista(tab); setMensaje('') }}
+      onClick={() => { setVista(tab); setMensaje(''); if (tab === 'hoy') cargarHistorialHoy() }}
       style={{
-        flex: 1, padding: '9px 4px', fontSize: 12, borderRadius: 8, cursor: 'pointer',
+        flex: 1, padding: '9px 4px', fontSize: 11, borderRadius: 8, cursor: 'pointer',
         background: vista === tab ? theme.dorado : 'transparent',
         color: vista === tab ? theme.negro : theme.dorado,
         border: '1px solid ' + theme.dorado, fontWeight: 600
@@ -138,6 +178,23 @@ export default function BarberoPanel({ barbero, onLogout }) {
 
   return (
     <div style={{ ...estilos.pantalla, display: 'flex', flexDirection: 'column', maxWidth: 480, margin: '0 auto', padding: 0 }}>
+
+      {/* Modal confirmación */}
+      {confirmando && (
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.85)', zIndex: 100, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24 }}>
+          <div style={{ background: '#1a1a1a', border: '1px solid ' + theme.dorado, borderRadius: 16, padding: '28px 24px', maxWidth: 340, width: '100%', textAlign: 'center' }}>
+            <div style={{ fontSize: 13, color: theme.grisMedio, marginBottom: 8 }}>Confirmá la operación</div>
+            <div style={{ fontSize: 18, fontWeight: 700, color: theme.blanco, marginBottom: 6 }}>{cliente?.nombre}</div>
+            <div style={{ fontSize: 15, color: theme.grisMedio, marginBottom: 4 }}>{confirmando.nombre}</div>
+            <div style={{ fontSize: 28, fontWeight: 700, color: theme.dorado, marginBottom: 24 }}>+{confirmando.puntos_otorga} pts</div>
+            <div style={{ display: 'flex', gap: 12 }}>
+              <button onClick={() => setConfirmando(null)} style={{ ...estilos.botonOscuro, flex: 1 }}>Cancelar</button>
+              <button onClick={() => registrarCompra(confirmando)} style={{ ...estilos.botonDorado, flex: 1 }}>Confirmar</button>
+            </div>
+          </div>
+        </div>
+      )}
+
       <div style={{ flex: 1, padding: '24px 16px 16px', overflowY: 'auto' }}>
 
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
@@ -189,23 +246,23 @@ export default function BarberoPanel({ barbero, onLogout }) {
                   const soloClientes = todosLosClientes.filter(c => c.rol === 'cliente')
                   const posicion = Object.fromEntries(soloClientes.map((c, i) => [c.id, i + 1]))
                   return clientesFiltrados.filter(c => c.rol === 'cliente').map(c => (
-                  <div
-                    key={c.id}
-                    style={{ display: 'flex', alignItems: 'center', borderRadius: 10, border: '1px solid #2a2a2a', background: cliente && cliente.id === c.id ? '#2a2000' : '#1a1a1a', overflow: 'hidden' }}
-                  >
-                    <button
-                      onClick={() => { setCliente(c); setTelefono(''); setMensaje('') }}
-                      style={{ flex: 1, display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 14px', background: 'none', border: 'none', cursor: 'pointer', color: theme.blanco, fontSize: 14 }}
+                    <div
+                      key={c.id}
+                      style={{ display: 'flex', alignItems: 'center', borderRadius: 10, border: '1px solid #2a2a2a', background: cliente && cliente.id === c.id ? '#2a2000' : '#1a1a1a', overflow: 'hidden' }}
                     >
-                      <span style={{ fontWeight: 600 }}>{c.nombre}</span>
-                      <span style={{ color: theme.grisMedio, fontSize: 13 }}>#{posicion[c.id]} · {c.telefono}</span>
-                    </button>
-                    <button
-                      onClick={() => eliminarCliente(c.id)}
-                      style={{ background: 'none', border: 'none', borderLeft: '1px solid #2a2a2a', color: theme.error, cursor: 'pointer', padding: '10px 14px', fontSize: 16 }}
-                    >✕</button>
-                  </div>
-                ))}
+                      <button
+                        onClick={() => { setCliente(c); setTelefono(''); setMensaje('') }}
+                        style={{ flex: 1, display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 14px', background: 'none', border: 'none', cursor: 'pointer', color: theme.blanco, fontSize: 14 }}
+                      >
+                        <span style={{ fontWeight: 600 }}>{c.nombre}</span>
+                        <span style={{ color: theme.grisMedio, fontSize: 13 }}>#{posicion[c.id]} · {c.telefono}</span>
+                      </button>
+                      <button
+                        onClick={() => eliminarCliente(c.id)}
+                        style={{ background: 'none', border: 'none', borderLeft: '1px solid #2a2a2a', color: theme.error, cursor: 'pointer', padding: '10px 14px', fontSize: 16 }}
+                      >✕</button>
+                    </div>
+                  ))
                 })()}
                 {clientesFiltrados.filter(c => c.rol === 'cliente').length === 0 && (
                   <div style={{ textAlign: 'center', color: theme.grisMedio, padding: 16, fontSize: 13 }}>No se encontraron clientes</div>
@@ -231,16 +288,15 @@ export default function BarberoPanel({ barbero, onLogout }) {
                   {btnTab('compras', 'Sumar pts')}
                   {btnTab('canjes', 'Canjear')}
                   {btnTab('ajuste', 'Ajuste')}
+                  {btnTab('hoy', 'Hoy')}
                 </div>
 
                 {vista === 'compras' && (
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                     {productos.map(p => (
-                      <button key={p.id} onClick={() => registrarCompra(p)}
+                      <button key={p.id} onClick={() => setConfirmando(p)}
                         style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px 16px', borderRadius: 10, border: '1px solid #2a2a2a', background: '#1a1a1a', cursor: 'pointer', color: theme.blanco, fontSize: 15 }}>
-                        <div style={{ textAlign: 'left' }}>
-                          <div>{p.nombre}</div>
-                        </div>
+                        <span>{p.nombre}</span>
                         <span style={{ fontWeight: 700, color: theme.dorado }}>+{p.puntos_otorga} pts</span>
                       </button>
                     ))}
@@ -273,6 +329,28 @@ export default function BarberoPanel({ barbero, onLogout }) {
                     </div>
                   </div>
                 )}
+
+                {vista === 'hoy' && (
+                  <div>
+                    {cargandoHoy ? (
+                      <div style={{ textAlign: 'center', color: theme.grisMedio, padding: 30 }}>Cargando...</div>
+                    ) : historialHoy.length === 0 ? (
+                      <div style={{ textAlign: 'center', color: theme.grisMedio, padding: 30, fontSize: 13 }}>No hay transacciones registradas hoy</div>
+                    ) : (
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                        {historialHoy.map(t => (
+                          <div key={t.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px 16px', borderRadius: 10, border: '1px solid #2a2a2a', background: '#1a1a1a' }}>
+                            <div>
+                              <div style={{ fontSize: 14, fontWeight: 600, color: theme.blanco }}>{t.cliente?.nombre}</div>
+                              <div style={{ fontSize: 12, color: theme.grisMedio, marginTop: 2 }}>{t.producto?.nombre} · {formatHora(t.created_at)}</div>
+                            </div>
+                            <span style={{ fontWeight: 700, color: theme.dorado, fontSize: 15 }}>+{t.puntos_ganados} pts</span>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
             )}
           </div>
@@ -288,33 +366,6 @@ export default function BarberoPanel({ barbero, onLogout }) {
 }
 
 function NuevoClienteForm({ onVolver }) {
-  const [nombre, setNombre] = useState('')
-  const [telefono, setTelefono] = useState('')
-  const [email, setEmail] = useState('')
-  const [mensaje, setMensaje] = useState('')
-  const [exito, setExito] = useState(false)
-
-  async function registrar() {
-    if (!nombre || !telefono) { setMensaje('Nombre y teléfono son obligatorios'); return }
-    const { data: telExiste } = await supabase.from('cliente').select('id').eq('telefono', telefono.trim()).single()
-    if (telExiste) { setMensaje('Ese teléfono ya está registrado'); return }
-    if (email) {
-      const { data: emailExiste } = await supabase.from('cliente').select('id').eq('email', email.toLowerCase().trim()).single()
-      if (emailExiste) { setMensaje('Ese email ya está registrado'); return }
-    }
-    const { error } = await supabase.from('cliente').insert({
-      nombre: nombre.trim(),
-      telefono: telefono.trim(),
-      email: email ? email.toLowerCase().trim() : null,
-      puntos_actuales: 0,
-      rol: 'cliente'
-    })
-    if (error) { setMensaje('Error al registrar'); return }
-    setExito(true)
-    setMensaje(nombre + ' registrado con éxito!')
-    setNombre(''); setTelefono(''); setEmail('')
-  }
-
   return (
     <div>
       <button onClick={onVolver} style={{ background: 'none', border: 'none', color: theme.dorado, cursor: 'pointer', fontSize: 14, marginBottom: 20, padding: 0 }}>← Volver</button>
@@ -329,7 +380,6 @@ function NuevoClienteForm({ onVolver }) {
           Apuntá la cámara al código y creá tu cuenta para empezar a acumular puntos
         </div>
       </div>
-
     </div>
   )
 }

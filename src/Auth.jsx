@@ -3,6 +3,11 @@ import { supabase } from './supabase'
 import { estilos, theme } from './theme'
 
 const CODIGO_BARBERO = 'blues2026'
+
+async function hashear(texto) {
+  const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(texto))
+  return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, '0')).join('')
+}
 const DOMINIOS_VALIDOS = ['gmail.com', 'outlook.com', 'hotmail.com', 'yahoo.com']
 
 function validarEmail(email) {
@@ -28,11 +33,12 @@ export default function Auth({ onLogin }) {
   async function login() {
     if (!email || !password) { setMensaje('Completá todos los campos'); return }
     setCargando(true)
+    const pwHash = await hashear(password)
     const { data } = await supabase
       .from('cliente')
       .select('*')
       .eq('email', email.toLowerCase().trim())
-      .eq('password_hash', password)
+      .eq('password_hash', pwHash)
       .single()
     setCargando(false)
     if (!data) { setMensaje('Email o contraseña incorrectos. Si no tenés cuenta, registrate.'); return }
@@ -73,11 +79,12 @@ export default function Auth({ onLogin }) {
     const { data: telExiste } = await supabase
       .from('cliente').select('id').eq('telefono', telefono.trim()).single()
     if (telExiste) { setMensaje('Ese teléfono ya está registrado'); setCargando(false); return }
+    const pwHash = await hashear(password)
     const { data, error } = await supabase.from('cliente').insert({
       nombre: nombre.trim(),
       email: email.toLowerCase().trim(),
       telefono: telefono.trim(),
-      password_hash: password,
+      password_hash: pwHash,
       rol: esBarbero ? 'barbero' : 'cliente',
       puntos_actuales: 0
     }).select().single()

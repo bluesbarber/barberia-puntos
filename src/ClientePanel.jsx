@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState, useRef } from 'react'
 import { supabase } from './supabase'
 import { estilos, theme } from './theme'
 
@@ -10,8 +10,51 @@ export default function ClientePanel({ cliente: clienteInicial, onLogout }) {
   const [cliente, setCliente] = useState(clienteInicial)
   const [premios, setPremios] = useState([])
   const [cargandoPremios, setCargandoPremios] = useState(false)
+  const [historial, setHistorial] = useState([])
+  const [cargandoHistorial, setCargandoHistorial] = useState(false)
+  const [visitas, setVisitas] = useState(0)
+  const [proximoPremio, setProximoPremio] = useState(null)
   const [vista, setVista] = useState('inicio')
   const [mensaje, setMensaje] = useState('')
+  const [puntosAnimados, setPuntosAnimados] = useState(0)
+  const animRef = useRef(null)
+
+  useEffect(() => {
+    cargarVisitasYPremio()
+    animarPuntos(cliente.puntos_actuales)
+  }, [])
+
+  function animarPuntos(total) {
+    const duracion = 1000
+    const inicio = Date.now()
+    const tick = () => {
+      const progreso = Math.min((Date.now() - inicio) / duracion, 1)
+      const eased = 1 - Math.pow(1 - progreso, 3)
+      setPuntosAnimados(Math.floor(eased * total))
+      if (progreso < 1) animRef.current = requestAnimationFrame(tick)
+    }
+    animRef.current = requestAnimationFrame(tick)
+  }
+
+  useEffect(() => () => cancelAnimationFrame(animRef.current), [])
+
+  async function cargarVisitasYPremio() {
+    const { data: txs } = await supabase
+      .from('transaccion')
+      .select('producto_id, producto:producto_id(categoria)')
+      .eq('cliente_id', clienteInicial.id)
+    const v = (txs || []).filter(t => t.producto?.categoria === 'corte').length
+    setVisitas(v)
+
+    const { data: prem } = await supabase
+      .from('premio')
+      .select('*')
+      .eq('activo', true)
+      .gt('costo_puntos', clienteInicial.puntos_actuales)
+      .order('costo_puntos')
+      .limit(1)
+    if (prem && prem.length > 0) setProximoPremio(prem[0])
+  }
 
   async function cargarPremios() {
     setCargandoPremios(true)
@@ -20,9 +63,25 @@ export default function ClientePanel({ cliente: clienteInicial, onLogout }) {
     setCargandoPremios(false)
   }
 
+  async function cargarHistorial() {
+    setCargandoHistorial(true)
+    const { data } = await supabase
+      .from('transaccion')
+      .select('id, puntos_ganados, created_at, producto:producto_id(nombre)')
+      .eq('cliente_id', clienteInicial.id)
+      .order('created_at', { ascending: false })
+      .limit(50)
+    setHistorial(data || [])
+    setCargandoHistorial(false)
+  }
+
   async function refrescarCliente() {
     const { data } = await supabase.from('cliente').select('*').eq('id', cliente.id).single()
-    if (data) setCliente(data)
+    if (data) {
+      setCliente(data)
+      animarPuntos(data.puntos_actuales)
+      cargarVisitasYPremio()
+    }
   }
 
   async function canjearPremio(premio) {
@@ -30,6 +89,18 @@ export default function ClientePanel({ cliente: clienteInicial, onLogout }) {
     if (cliente.puntos_actuales < premio.costo_puntos) {
       setMensaje('No tenés suficientes puntos para este premio')
       return
+    }
+    if (premio.nombre.toLowerCase().includes('google')) {
+      const { data: yaCanjo } = await supabase
+        .from('canje')
+        .select('id')
+        .eq('cliente_id', cliente.id)
+        .eq('premio_id', premio.id)
+        .limit(1)
+      if (yaCanjo && yaCanjo.length > 0) {
+        setMensaje('Ya canjeaste este premio anteriormente. Solo se permite una vez.')
+        return
+      }
     }
     const { error } = await supabase.from('canje').insert({
       cliente_id: cliente.id,
@@ -41,16 +112,29 @@ export default function ClientePanel({ cliente: clienteInicial, onLogout }) {
     refrescarCliente()
   }
 
+  function formatFecha(iso) {
+    const d = new Date(iso)
+    return d.toLocaleDateString('es-AR', { day: '2-digit', month: '2-digit', year: '2-digit' })
+  }
+
+  const ptaFaltan = proximoPremio ? proximoPremio.costo_puntos - cliente.puntos_actuales : null
+
   const barraNav = (
     <div style={{ display: 'flex', justifyContent: 'space-around', borderTop: '1px solid ' + theme.dorado, background: '#111', padding: '12px 0', position: 'sticky', bottom: 0 }}>
       {[
         { id: 'inicio', icono: '★', label: 'Inicio' },
+        { id: 'historial', icono: '♜', label: 'Historial' },
         { id: 'premios', icono: '♛', label: 'Premios' },
         { id: 'ubicacion', icono: '♪', label: 'Contacto' },
       ].map(item => (
         <button
           key={item.id}
-          onClick={() => { setVista(item.id); setMensaje(''); if (item.id === 'premios') cargarPremios() }}
+          onClick={() => {
+            setVista(item.id)
+            setMensaje('')
+            if (item.id === 'premios') cargarPremios()
+            if (item.id === 'historial') cargarHistorial()
+          }}
           style={{
             background: 'none', border: 'none', cursor: 'pointer', display: 'flex',
             flexDirection: 'column', alignItems: 'center', gap: 4,
@@ -84,11 +168,36 @@ export default function ClientePanel({ cliente: clienteInicial, onLogout }) {
 
         {vista === 'inicio' && (
           <div>
-            <div style={{ ...estilos.tarjeta, textAlign: 'center', background: 'linear-gradient(160deg, #1a1a1a, #2a2000)', borderColor: theme.dorado, padding: '32px 20px', marginBottom: 28 }}>
+            <div style={{ ...estilos.tarjeta, textAlign: 'center', background: 'linear-gradient(160deg, #1a1a1a, #2a2000)', borderColor: theme.dorado, padding: '32px 20px', marginBottom: ptaFaltan ? 16 : 28 }}>
               <div style={{ fontSize: 13, color: theme.dorado, letterSpacing: 4, marginBottom: 12 }}>TUS PUNTOS</div>
-              <div style={{ fontSize: 72, fontWeight: 700, color: theme.dorado, lineHeight: 1 }}>{cliente.puntos_actuales}</div>
+              <div style={{ fontSize: 72, fontWeight: 700, color: theme.dorado, lineHeight: 1 }}>{puntosAnimados}</div>
               <div style={{ fontSize: 14, color: theme.grisMedio, marginTop: 10 }}>puntos acumulados</div>
+              {visitas > 0 && (
+                <div style={{ marginTop: 14, fontSize: 13, color: theme.grisMedio }}>
+                  ✂ <span style={{ color: theme.doradoClaro, fontWeight: 600 }}>{visitas}</span> {visitas === 1 ? 'visita' : 'visitas'} a la barbería
+                </div>
+              )}
             </div>
+
+            {proximoPremio && ptaFaltan <= 30 && (
+              <div style={{ background: '#1a1500', border: '1px solid ' + theme.dorado, borderRadius: 12, padding: '14px 18px', marginBottom: 20, display: 'flex', alignItems: 'center', gap: 12 }}>
+                <span style={{ fontSize: 24 }}>♛</span>
+                <div>
+                  <div style={{ fontSize: 13, fontWeight: 700, color: theme.dorado }}>¡Casi llegás a {proximoPremio.nombre}!</div>
+                  <div style={{ fontSize: 12, color: theme.grisMedio, marginTop: 2 }}>Te faltan solo <span style={{ color: theme.doradoClaro, fontWeight: 700 }}>{ptaFaltan} pts</span></div>
+                </div>
+              </div>
+            )}
+
+            {proximoPremio && ptaFaltan > 30 && (
+              <div style={{ background: '#111', border: '1px solid #2a2a2a', borderRadius: 12, padding: '12px 18px', marginBottom: 20, display: 'flex', alignItems: 'center', gap: 12 }}>
+                <span style={{ fontSize: 20 }}>♛</span>
+                <div>
+                  <div style={{ fontSize: 12, color: theme.grisMedio }}>Próximo premio: <span style={{ color: theme.blanco, fontWeight: 600 }}>{proximoPremio.nombre}</span></div>
+                  <div style={{ fontSize: 12, color: theme.grisMedio, marginTop: 2 }}>Te faltan <span style={{ color: theme.doradoClaro, fontWeight: 600 }}>{ptaFaltan} pts</span></div>
+                </div>
+              </div>
+            )}
 
             <div style={{ fontSize: 11, color: theme.dorado, letterSpacing: 3, marginBottom: 14 }}>CÓMO GANAR PUNTOS</div>
             <div style={{ ...estilos.tarjeta, padding: '4px 20px', marginBottom: 28 }}>
@@ -108,13 +217,38 @@ export default function ClientePanel({ cliente: clienteInicial, onLogout }) {
             </div>
 
             <div style={{ fontSize: 11, color: theme.dorado, letterSpacing: 3, marginBottom: 14 }}>ACLARACIONES</div>
-
             <div style={{ ...estilos.tarjeta, background: '#1a1500', borderColor: theme.doradoOscuro, padding: '18px 20px' }}>
               <div style={{ fontSize: 13, fontWeight: 600, color: theme.dorado, marginBottom: 8 }}>Opinión en Google</div>
               <div style={{ fontSize: 13, color: theme.grisMedio, lineHeight: 1.7 }}>
                 Dejá tu reseña en Google Maps y mostrásela al barbero para que te acredite los 5 pts.
               </div>
             </div>
+          </div>
+        )}
+
+        {vista === 'historial' && (
+          <div>
+            <div style={{ fontSize: 11, color: theme.dorado, letterSpacing: 3, marginBottom: 16 }}>TU HISTORIAL</div>
+            {cargandoHistorial ? (
+              <div style={{ textAlign: 'center', color: theme.grisMedio, padding: 40 }}>Cargando...</div>
+            ) : historial.length === 0 ? (
+              <div style={{ ...estilos.tarjeta, textAlign: 'center', padding: '40px 20px' }}>
+                <div style={{ fontSize: 32, marginBottom: 12 }}>✂</div>
+                <div style={{ color: theme.grisMedio, fontSize: 14 }}>Todavía no tenés transacciones registradas</div>
+              </div>
+            ) : (
+              <div style={{ ...estilos.tarjeta, padding: '4px 20px' }}>
+                {historial.map((t, i) => (
+                  <div key={t.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '14px 0', borderBottom: i < historial.length - 1 ? '1px solid #2a2a2a' : 'none' }}>
+                    <div>
+                      <div style={{ fontSize: 14, color: theme.blanco, fontWeight: 600 }}>{t.producto?.nombre || 'Servicio'}</div>
+                      <div style={{ fontSize: 12, color: theme.grisMedio, marginTop: 2 }}>{formatFecha(t.created_at)}</div>
+                    </div>
+                    <span style={{ fontSize: 15, fontWeight: 700, color: theme.dorado }}>+{t.puntos_ganados} pts</span>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         )}
 
