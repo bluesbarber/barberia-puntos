@@ -44,15 +44,18 @@ export default function ClientePanel({ cliente: clienteInicial, onLogout }) {
     const ultima = data && data.length > 0 ? new Date(data[0].fecha) : null
     if (!ultima) return
     const hoy = new Date()
-    const mesesSinVenir = (hoy - ultima) / (1000 * 60 * 60 * 24 * 30)
-    if (mesesSinVenir >= 6) {
+    const vence = new Date(ultima)
+    vence.setMonth(vence.getMonth() + 6)
+    const diasRestantes = Math.ceil((vence - hoy) / (1000 * 60 * 60 * 24))
+    if (diasRestantes <= 0) {
       await supabase.from('cliente').update({ puntos_actuales: 0 }).eq('id', clienteInicial.id)
       setCliente(c => ({ ...c, puntos_actuales: 0 }))
       setPuntosAnimados(0)
       setAvisoVencimiento('vencido')
-    } else if (mesesSinVenir >= 5) {
-      const diasRestantes = Math.ceil((ultima.setMonth(ultima.getMonth() + 6) - hoy) / (1000 * 60 * 60 * 24))
+    } else if (diasRestantes <= 30) {
       setAvisoVencimiento('proximo:' + diasRestantes)
+    } else {
+      setAvisoVencimiento('normal:' + diasRestantes)
     }
   }
 
@@ -206,6 +209,15 @@ export default function ClientePanel({ cliente: clienteInicial, onLogout }) {
                 </div>
               )}
             </div>
+
+            {avisoVencimiento?.startsWith('normal:') && (
+              <div style={{ background: '#111', border: '1px solid #2a2a2a', borderRadius: 12, padding: '12px 18px', marginBottom: 16, display: 'flex', alignItems: 'center', gap: 12 }}>
+                <span style={{ fontSize: 20 }}>⏳</span>
+                <div style={{ fontSize: 12, color: theme.grisMedio, lineHeight: 1.6 }}>
+                  Recordá que tus puntos vencen en <span style={{ color: theme.doradoClaro, fontWeight: 700 }}>{avisoVencimiento.split(':')[1]} días</span>. ¡Seguí viniendo para no perderlos!
+                </div>
+              </div>
+            )}
 
             {avisoVencimiento === 'vencido' && (
               <div style={{ background: '#1a0000', border: '1px solid ' + theme.error, borderRadius: 12, padding: '14px 18px', marginBottom: 16, display: 'flex', alignItems: 'center', gap: 12 }}>
