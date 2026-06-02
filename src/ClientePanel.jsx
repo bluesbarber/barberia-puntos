@@ -82,24 +82,7 @@ export default function ClientePanel({ cliente: clienteInicial, onLogout }) {
   useEffect(() => {
     cargarVisitasYPremio()
     animarPuntos(clienteInicial.puntos_actuales)
-
-    const canal = supabase
-      .channel('cliente-' + clienteInicial.id)
-      .on('postgres_changes', {
-        event: 'UPDATE',
-        schema: 'public',
-        table: 'cliente',
-        filter: 'id=eq.' + clienteInicial.id
-      }, payload => {
-        const nuevo = payload.new
-        setCliente(nuevo)
-        animarPuntos(nuevo.puntos_actuales)
-        cargarVisitasYPremio(nuevo.puntos_actuales)
-        cargarHistorial()
-      })
-      .subscribe()
-
-    return () => { cancelAnimationFrame(animRef.current); supabase.removeChannel(canal) }
+    return () => cancelAnimationFrame(animRef.current)
   }, [])
 
   async function canjearPremio(premio) {
