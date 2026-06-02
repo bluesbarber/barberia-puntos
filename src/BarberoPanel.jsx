@@ -1,6 +1,9 @@
 import { useEffect, useState } from 'react'
+import { QRCodeSVG } from 'qrcode.react'
 import { supabase } from './supabase'
 import { estilos, theme } from './theme'
+
+const SITIO_URL = 'https://bluesbarber.vercel.app'
 
 export default function BarberoPanel({ barbero, onLogout }) {
   const [telefono, setTelefono] = useState('')
@@ -312,6 +315,18 @@ function NuevoClienteForm({ onVolver }) {
     <div>
       <button onClick={onVolver} style={{ background: 'none', border: 'none', color: theme.dorado, cursor: 'pointer', fontSize: 14, marginBottom: 20, padding: 0 }}>← Volver</button>
       <div style={{ fontSize: 11, color: theme.dorado, letterSpacing: 3, marginBottom: 16 }}>NUEVO CLIENTE</div>
+
+      <div style={{ ...estilos.tarjeta, textAlign: 'center', padding: '28px 20px', marginBottom: 20 }}>
+        <div style={{ fontSize: 13, color: theme.dorado, letterSpacing: 2, marginBottom: 16 }}>ESCANEÁ PARA REGISTRARTE</div>
+        <div style={{ display: 'inline-block', background: '#fff', padding: 16, borderRadius: 12 }}>
+          <QRCodeSVG value={SITIO_URL} size={220} fgColor="#0a0a0a" bgColor="#ffffff" />
+        </div>
+        <div style={{ fontSize: 12, color: theme.grisMedio, marginTop: 14, lineHeight: 1.6 }}>
+          Apuntá la cámara al código y creá tu cuenta para empezar a acumular puntos
+        </div>
+      </div>
+
+      <div style={{ fontSize: 11, color: theme.dorado, letterSpacing: 3, marginBottom: 12 }}>O REGISTRAR MANUALMENTE</div>
       <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
         <input style={estilos.input} placeholder="Nombre completo" value={nombre} onChange={e => setNombre(e.target.value)} />
         <input style={estilos.input} placeholder="Teléfono" value={telefono} onChange={e => setTelefono(e.target.value)} />
