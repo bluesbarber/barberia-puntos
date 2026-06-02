@@ -25,10 +25,6 @@ export default function ClientePanel({ cliente: clienteInicial, onLogout }) {
 
   async function canjearPremio(premio) {
     setMensaje('')
-    if (premio.nombre === '2x1 en corte') {
-      setMensaje('Para el 2x1 acercate al barbero. Se pueden combinar los puntos de ambas personas para llegar a los 700 pts. (Por ejemplo: cliente 1 pone 400 pts y cliente 2 pone 300 pts.) Ambos tienen que tener cuenta registrada, aunque el segundo cliente no aporte puntos.')
-      return
-    }
     if (cliente.puntos_actuales < premio.costo_puntos) {
       setMensaje('No tenés suficientes puntos para este premio')
       return
@@ -44,7 +40,7 @@ export default function ClientePanel({ cliente: clienteInicial, onLogout }) {
   }
 
   const barraNav = (
-    <div style={{ display: 'flex', justifyContent: 'space-around', borderTop: '1px solid ' + theme.dorado, background: '#111', padding: '10px 0', position: 'sticky', bottom: 0 }}>
+    <div style={{ display: 'flex', justifyContent: 'space-around', borderTop: '1px solid ' + theme.dorado, background: '#111', padding: '12px 0', position: 'sticky', bottom: 0 }}>
       {[
         { id: 'inicio', icono: '★', label: 'Inicio' },
         { id: 'premios', icono: '♛', label: 'Premios' },
@@ -55,12 +51,12 @@ export default function ClientePanel({ cliente: clienteInicial, onLogout }) {
           onClick={() => { setVista(item.id); setMensaje(''); if (item.id === 'premios') cargarPremios() }}
           style={{
             background: 'none', border: 'none', cursor: 'pointer', display: 'flex',
-            flexDirection: 'column', alignItems: 'center', gap: 3,
+            flexDirection: 'column', alignItems: 'center', gap: 4,
             color: vista === item.id ? theme.dorado : theme.grisMedio,
             fontSize: 11, fontWeight: vista === item.id ? 700 : 400
           }}
         >
-          <span style={{ fontSize: 20 }}>{item.icono}</span>
+          <span style={{ fontSize: 22 }}>{item.icono}</span>
           {item.label}
         </button>
       ))}
@@ -68,50 +64,60 @@ export default function ClientePanel({ cliente: clienteInicial, onLogout }) {
   )
 
   return (
-    <div style={{ ...estilos.pantalla, display: 'flex', flexDirection: 'column', maxWidth: 480, margin: '0 auto', padding: 0 }}>
-      <div style={{ flex: 1, padding: '24px 16px 16px', overflowY: 'auto' }}>
+    <div style={{ ...estilos.pantalla, display: 'flex', flexDirection: 'column', maxWidth: 480, margin: '0 auto', padding: 0, minHeight: '100vh' }}>
+      <div style={{ flex: 1, padding: '28px 20px 20px', overflowY: 'auto' }}>
 
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
-          <div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-  <img src="/logo.png" alt="Blues Barber" style={{ width: 36, height: 36, objectFit: 'contain' }} />
-  <div>
-    <div style={{ fontSize: 11, color: theme.dorado, letterSpacing: 3 }}>BLUES Barber</div>
-    <div style={{ fontSize: 18, fontWeight: 700 }}>Hola, {cliente.nombre.split(' ')[0]}</div>
-  </div>
-</div>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 28 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            <img src="/logo.png" alt="Blues Barber" style={{ width: 40, height: 40, objectFit: 'contain' }} />
+            <div>
+              <div style={{ fontSize: 11, color: theme.dorado, letterSpacing: 3 }}>BLUES Barber</div>
+              <div style={{ fontSize: 17, fontWeight: 700 }}>Hola, {cliente.nombre.split(' ')[0]}</div>
+            </div>
           </div>
-          <button onClick={onLogout} style={{ background: 'none', border: '1px solid ' + theme.doradoOscuro, color: theme.grisMedio, borderRadius: 8, padding: '6px 12px', cursor: 'pointer', fontSize: 12 }}>
+          <button onClick={onLogout} style={{ background: 'none', border: '1px solid ' + theme.doradoOscuro, color: theme.grisMedio, borderRadius: 8, padding: '6px 14px', cursor: 'pointer', fontSize: 12 }}>
             Salir
           </button>
         </div>
 
         {vista === 'inicio' && (
           <div>
-            <div style={{ ...estilos.tarjeta, textAlign: 'center', background: 'linear-gradient(160deg, #1a1a1a, #2a2000)', borderColor: theme.dorado }}>
-              <div style={{ fontSize: 13, color: theme.dorado, letterSpacing: 3, marginBottom: 8 }}>TUS PUNTOS</div>
-              <div style={{ fontSize: 64, fontWeight: 700, color: theme.dorado, lineHeight: 1 }}>{cliente.puntos_actuales}</div>
-              <div style={{ fontSize: 13, color: theme.grisMedio, marginTop: 8 }}>puntos acumulados</div>
+            <div style={{ ...estilos.tarjeta, textAlign: 'center', background: 'linear-gradient(160deg, #1a1a1a, #2a2000)', borderColor: theme.dorado, padding: '32px 20px', marginBottom: 28 }}>
+              <div style={{ fontSize: 13, color: theme.dorado, letterSpacing: 4, marginBottom: 12 }}>TUS PUNTOS</div>
+              <div style={{ fontSize: 72, fontWeight: 700, color: theme.dorado, lineHeight: 1 }}>{cliente.puntos_actuales}</div>
+              <div style={{ fontSize: 14, color: theme.grisMedio, marginTop: 10 }}>puntos acumulados</div>
             </div>
 
-            <div style={{ fontSize: 11, color: theme.dorado, letterSpacing: 3, marginBottom: 12 }}>CÓMO GANAR PUNTOS</div>
-            <div style={{ ...estilos.tarjeta, padding: '16px 20px' }}>
+            <div style={{ fontSize: 11, color: theme.dorado, letterSpacing: 3, marginBottom: 14 }}>CÓMO GANAR PUNTOS</div>
+            <div style={{ ...estilos.tarjeta, padding: '4px 20px', marginBottom: 28 }}>
               {[
-                { label: 'Corte de pelo', pts: '+100 pts' },
-                { label: 'Compra de insumo', pts: '+50 pts' },
-                { label: 'Opinión en Google', pts: '+25 pts' },
-              ].map((item, i) => (
-                <div key={i} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 0', borderBottom: i < 2 ? '1px solid #2a2a2a' : 'none' }}>
+                { label: 'Corte de pelo', pts: '+25 pts' },
+                { label: 'Corte + barba', pts: '+30 pts' },
+                { label: 'Comprar Monster', pts: '+10 pts' },
+                { label: 'Insumos', pts: '+10 pts' },
+                { label: 'Traés un amigo', pts: '+40 pts' },
+                { label: 'Opinión en Google', pts: '+5 pts' },
+              ].map((item, i, arr) => (
+                <div key={i} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '14px 0', borderBottom: i < arr.length - 1 ? '1px solid #2a2a2a' : 'none' }}>
                   <span style={{ fontSize: 15, color: theme.blanco }}>{item.label}</span>
                   <span style={{ fontSize: 15, fontWeight: 700, color: theme.dorado }}>{item.pts}</span>
                 </div>
               ))}
             </div>
 
-            <div style={{ ...estilos.tarjeta, background: '#1a1500', borderColor: theme.doradoOscuro, padding: '14px 16px' }}>
-              <div style={{ fontSize: 12, color: theme.dorado, marginBottom: 6, fontWeight: 600 }}>ACLARACIÓN 2x1</div>
-              <div style={{ fontSize: 13, color: theme.grisMedio, lineHeight: 1.6 }}>
-                Para el 2x1 Se pueden combinar los puntos de ambas personas para llegar a los 700 pts. (Por ejemplo: cliente 1 pone 400 pts y cliente 2 pone 300 pts.) Ambos tienen que tener cuenta registrada, aunque el segundo cliente no aporte puntos.
+            <div style={{ fontSize: 11, color: theme.dorado, letterSpacing: 3, marginBottom: 14 }}>ACLARACIONES</div>
+
+            <div style={{ ...estilos.tarjeta, background: '#1a1500', borderColor: theme.doradoOscuro, padding: '18px 20px', marginBottom: 12 }}>
+              <div style={{ fontSize: 13, fontWeight: 600, color: theme.dorado, marginBottom: 8 }}>Traés un amigo</div>
+              <div style={{ fontSize: 13, color: theme.grisMedio, lineHeight: 1.7 }}>
+                Al que invita se le suman 40 pts. Al invitado se le suma lo que corresponda al servicio que tome.
+              </div>
+            </div>
+
+            <div style={{ ...estilos.tarjeta, background: '#1a1500', borderColor: theme.doradoOscuro, padding: '18px 20px' }}>
+              <div style={{ fontSize: 13, fontWeight: 600, color: theme.dorado, marginBottom: 8 }}>Opinión en Google</div>
+              <div style={{ fontSize: 13, color: theme.grisMedio, lineHeight: 1.7 }}>
+                Dejá tu reseña en Google Maps y mostrásela al barbero para que te acredite los 5 pts.
               </div>
             </div>
           </div>
@@ -119,34 +125,40 @@ export default function ClientePanel({ cliente: clienteInicial, onLogout }) {
 
         {vista === 'premios' && (
           <div>
-            <div style={{ fontSize: 11, color: theme.dorado, letterSpacing: 3, marginBottom: 12 }}>CANJEAR PREMIOS</div>
+            <div style={{ fontSize: 11, color: theme.dorado, letterSpacing: 3, marginBottom: 16 }}>CANJEAR PREMIOS</div>
+
+            <div style={{ ...estilos.tarjeta, background: 'linear-gradient(160deg, #1a1a1a, #2a2000)', textAlign: 'center', padding: '20px', marginBottom: 24 }}>
+              <div style={{ fontSize: 13, color: theme.grisMedio, marginBottom: 4 }}>Tus puntos disponibles</div>
+              <div style={{ fontSize: 44, fontWeight: 700, color: theme.dorado }}>{cliente.puntos_actuales}</div>
+            </div>
+
             {mensaje && (
-              <div style={{ background: '#1a1500', border: '1px solid ' + theme.dorado, borderRadius: 10, padding: '12px 14px', marginBottom: 16, fontSize: 13, color: theme.doradoClaro, lineHeight: 1.5 }}>
+              <div style={{ background: '#1a1500', border: '1px solid ' + theme.dorado, borderRadius: 10, padding: '14px 16px', marginBottom: 20, fontSize: 13, color: theme.doradoClaro, lineHeight: 1.6 }}>
                 {mensaje}
               </div>
             )}
+
             {cargandoPremios ? (
               <div style={{ textAlign: 'center', color: theme.grisMedio, padding: 40 }}>Cargando premios...</div>
             ) : (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
                 {premios.map(p => {
-                  const puedeC = cliente.puntos_actuales >= p.costo_puntos || p.nombre === '2x1 en corte'
+                  const puedeC = cliente.puntos_actuales >= p.costo_puntos
                   return (
-                    <div key={p.id} style={{ ...estilos.tarjeta, marginBottom: 0, opacity: puedeC ? 1 : 0.5 }}>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 8 }}>
+                    <div key={p.id} style={{ ...estilos.tarjeta, marginBottom: 0, opacity: puedeC ? 1 : 0.5, padding: '20px' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
                         <div style={{ fontSize: 16, fontWeight: 600, color: theme.blanco }}>{p.nombre}</div>
                         <div style={{ fontSize: 16, fontWeight: 700, color: theme.error }}>-{p.costo_puntos} pts</div>
                       </div>
-                      <div style={{ fontSize: 13, color: theme.grisMedio, marginBottom: 12 }}>{p.descripcion}</div>
-                      {p.nombre === '2x1 en corte' && (
-                        <div style={{ fontSize: 12, color: theme.doradoOscuro, marginBottom: 10, fontStyle: 'italic' }}>
-                        </div>
+                      {p.descripcion && (
+                        <div style={{ fontSize: 13, color: theme.grisMedio, marginBottom: 16, lineHeight: 1.5 }}>{p.descripcion}</div>
                       )}
                       <button
                         onClick={() => canjearPremio(p)}
-                        style={{ ...estilos.botonDorado, padding: '10px', fontSize: 14 }}
+                        disabled={!puedeC}
+                        style={{ ...estilos.botonDorado, padding: '12px', fontSize: 14, opacity: puedeC ? 1 : 0.4 }}
                       >
-                        {p.nombre === '2x1 en corte' ? 'Ver instrucciones' : puedeC ? 'Canjear' : 'Te faltan ' + (p.costo_puntos - cliente.puntos_actuales) + ' pts'}
+                        {puedeC ? 'Canjear' : 'Te faltan ' + (p.costo_puntos - cliente.puntos_actuales) + ' pts'}
                       </button>
                     </div>
                   )
@@ -158,24 +170,21 @@ export default function ClientePanel({ cliente: clienteInicial, onLogout }) {
 
         {vista === 'ubicacion' && (
           <div>
-            <div style={{ fontSize: 11, color: theme.dorado, letterSpacing: 3, marginBottom: 12 }}>ENCONTRANOS</div>
-            <div style={{ ...estilos.tarjeta, textAlign: 'center' }}>
-              <div style={{ fontSize: 40, marginBottom: 12 }}>♪</div>
-              <div style={{ fontSize: 20, fontWeight: 700, marginBottom: 4 }}>Blues Barber</div>
-              <div style={{ fontSize: 13, color: theme.grisMedio, marginBottom: 20, lineHeight: 1.6 }}>
-                Dejá tu opinión en Google y sumás 25 puntos. Mostráselo al barbero para que te los acredite.
+            <div style={{ fontSize: 11, color: theme.dorado, letterSpacing: 3, marginBottom: 16 }}>ENCONTRANOS</div>
+
+            <div style={{ ...estilos.tarjeta, textAlign: 'center', padding: '36px 20px', marginBottom: 16 }}>
+              <div style={{ fontSize: 48, marginBottom: 16 }}>♪</div>
+              <div style={{ fontSize: 22, fontWeight: 700, marginBottom: 8 }}>Blues Barber</div>
+              <div style={{ fontSize: 13, color: theme.grisMedio, marginBottom: 28, lineHeight: 1.7 }}>
+                Encontranos en Google Maps y dejá tu reseña para sumar 5 puntos. Mostrásela al barbero para que te los acredite.
               </div>
-              
-                <a href={MAPS_URL} target="_blank" rel="noreferrer"
-  style={{ ...estilos.botonDorado, display: 'block', textDecoration: 'none', textAlign: 'center', padding: '13px', borderRadius: 10, fontWeight: 700 }}>
-  Ver en Google Maps
-</a>
+              <a href={MAPS_URL} target="_blank" rel="noreferrer" style={{ ...estilos.botonDorado, display: 'block', textDecoration: 'none', textAlign: 'center', padding: '14px', borderRadius: 10, fontWeight: 700 }}>Ver en Google Maps</a>
             </div>
 
-            <div style={{ ...estilos.tarjeta, background: '#1a1500', borderColor: theme.doradoOscuro, padding: '14px 16px', marginTop: 8 }}>
-              <div style={{ fontSize: 12, color: theme.dorado, marginBottom: 6, fontWeight: 600 }}>ACLARACIÓN 2x1</div>
-              <div style={{ fontSize: 13, color: theme.grisMedio, lineHeight: 1.6 }}>
-                Para el 2x1 Se pueden combinar los puntos de ambas personas para llegar a los 700 pts. (Por ejemplo: cliente 1 pone 400 pts y cliente 2 pone 300 pts.) Ambos tienen que tener cuenta registrada, aunque el segundo cliente no aporte puntos.
+            <div style={{ ...estilos.tarjeta, background: '#1a1500', borderColor: theme.doradoOscuro, padding: '18px 20px' }}>
+              <div style={{ fontSize: 12, color: theme.dorado, marginBottom: 8, fontWeight: 600 }}>Traés un amigo</div>
+              <div style={{ fontSize: 13, color: theme.grisMedio, lineHeight: 1.7 }}>
+                Al que invita se le suman 40 pts. Al invitado se le suma lo que corresponda al servicio que tome.
               </div>
             </div>
           </div>
