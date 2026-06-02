@@ -173,7 +173,7 @@ export default function ClientePanel({ cliente: clienteInicial, onLogout }) {
               <div style={{ fontSize: 13, color: theme.grisMedio, marginBottom: 28, lineHeight: 1.7 }}>
                 Encontranos en Google Maps y dejá tu reseña para sumar 5 puntos. Mostrásela al barbero para que te los acredite.
               </div>
-              <a href={MAPS_URL} target="_blank" rel="noreferrer" style={{ ...estilos.botonDorado, display: 'block', textDecoration: 'none', textAlign: 'center', padding: '14px', borderRadius: 10, fontWeight: 700, marginBottom: 12 }}>Ver en Google Maps</a>
+              <a href={MAPS_URL} target="_blank" rel="noreferrer" style={{ display: 'block', textDecoration: 'none', textAlign: 'center', padding: '14px', borderRadius: 10, fontWeight: 700, fontSize: 15, background: theme.dorado, color: theme.negro, marginBottom: 12 }}>Ver en Google Maps</a>
               <a href={WHATSAPP_URL} target="_blank" rel="noreferrer" style={{ display: 'block', textDecoration: 'none', textAlign: 'center', padding: '14px', borderRadius: 10, fontWeight: 700, fontSize: 15, background: '#25D366', color: '#fff', marginBottom: 12 }}>WhatsApp</a>
               <a href={INSTAGRAM_URL} target="_blank" rel="noreferrer" style={{ display: 'block', textDecoration: 'none', textAlign: 'center', padding: '14px', borderRadius: 10, fontWeight: 700, fontSize: 15, background: 'linear-gradient(45deg, #833ab4, #fd1d1d, #fcb045)', color: '#fff' }}>Instagram</a>
             </div>
