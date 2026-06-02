@@ -93,7 +93,7 @@ export default function ClientePanel({ cliente: clienteInicial, onLogout }) {
             <div style={{ fontSize: 11, color: theme.dorado, letterSpacing: 3, marginBottom: 14 }}>CÓMO GANAR PUNTOS</div>
             <div style={{ ...estilos.tarjeta, padding: '4px 20px', marginBottom: 28 }}>
               {[
-                { label: 'PROMO 2 cortes x 30k', pts: '+40 pts' },
+                { label: 'PROMO 2 cortes x 30k * Seba', pts: '+40 pts' },
                 { label: 'Corte + barba', pts: '+30 pts' },
                 { label: 'Corte de pelo', pts: '+25 pts' },
                 { label: 'Comprar Monster', pts: '+10 pts' },
