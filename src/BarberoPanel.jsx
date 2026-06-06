@@ -329,15 +329,28 @@ export default function BarberoPanel({ barbero, onLogout }) {
                 )}
 
                 {vista === 'canjes' && (
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
                     {premios.map(p => {
                       const puede = cliente.puntos_actuales >= p.costo_puntos
                       return (
-                        <button key={p.id} onClick={() => canjearPremio(p)} disabled={!puede}
-                          style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px 16px', borderRadius: 10, border: '1px solid #2a2a2a', background: '#1a1a1a', cursor: puede ? 'pointer' : 'not-allowed', color: puede ? theme.blanco : theme.grisMedio, fontSize: 15, opacity: puede ? 1 : 0.5 }}>
-                          <span>{p.nombre}</span>
-                          <span style={{ fontWeight: 700, color: theme.error }}>-{p.costo_puntos} pts</span>
-                        </button>
+                        <div key={p.id} style={{ borderRadius: 12, border: '1px solid #2a2a2a', background: '#1a1a1a', padding: '20px', opacity: puede ? 1 : 0.5 }}>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
+                            <div style={{ fontSize: 16, fontWeight: 600, color: theme.blanco }}>{p.nombre}</div>
+                            <div style={{ fontSize: 15, fontWeight: 700, color: theme.error }}>-{p.costo_puntos} pts</div>
+                          </div>
+                          {p.descripcion && (
+                            <div style={{ fontSize: 13, color: theme.grisMedio, marginBottom: 14, lineHeight: 1.5 }}>{p.descripcion}</div>
+                          )}
+                          <button
+                            onClick={() => canjearPremio(p)}
+                            disabled={!puede}
+                            style={{ width: '100%', padding: '12px', borderRadius: 10, border: 'none', cursor: puede ? 'pointer' : 'not-allowed', fontWeight: 700, fontSize: 14,
+                              background: puede ? theme.dorado : '#2a2a2a',
+                              color: puede ? theme.negro : theme.grisMedio }}
+                          >
+                            {puede ? 'Canjear' : 'Le faltan ' + (p.costo_puntos - cliente.puntos_actuales) + ' pts'}
+                          </button>
+                        </div>
                       )
                     })}
                   </div>
