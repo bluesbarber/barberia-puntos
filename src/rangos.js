@@ -1,8 +1,8 @@
 export const RANGOS = [
   { nombre: 'Cliente',  icono: '🥉', minCortes: 0,  bonus: 0   },
-  { nombre: 'Regular',  icono: '🥈', minCortes: 5,  bonus: 0.05 },
-  { nombre: 'Fiel',     icono: '🥇', minCortes: 15, bonus: 0.10 },
-  { nombre: 'VIP',      icono: '💎', minCortes: 25, bonus: 0.15 },
+  { nombre: 'Regular',  icono: '🥈', minCortes: 3,  bonus: 0.05 },
+  { nombre: 'Fiel',     icono: '🥇', minCortes: 5,  bonus: 0.10 },
+  { nombre: 'VIP',      icono: '💎', minCortes: 7,  bonus: 0.15 },
 ]
 
 export function getRango(cortes) {
